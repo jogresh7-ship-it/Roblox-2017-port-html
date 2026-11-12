@@ -253,7 +253,7 @@ html,body{overscroll-behavior:none;-webkit-touch-callout:none}
  #det>*{max-width:94vw}
 }
 </style>
-<script>
+<script>try{if(localStorage.getItem('bh_epoch')!=='2'){Object.keys(localStorage).forEach(k=>{if(/^(bh_|own_|erablox_|avatar|pname|last_review_id|settings)/.test(k))localStorage.removeItem(k)});localStorage.setItem('bh_epoch','2')}}catch(e){}
 // BrickLua: a small Lua 5.1 interpreter (generator based so scripts can wait()).
 const BrickLua=(()=>{
 class LuaError extends Error{constructor(v,tb){super(typeof v==='string'?v:'error');this.value=v;this.luatb=tb}}
@@ -1860,7 +1860,7 @@ const CFG={apiKey:"AIzaSyDZAjauAbq0tsLh1EZtaUp8-O9wbZmX4A8",authDomain:"erablox0
 const V='10.8.0',U=m=>`https://www.gstatic.com/firebasejs/${V}/firebase-${m}.js`;
 let FB=null;
 const fb=()=>FB||(FB=(async()=>{const [A,Au,F]=await Promise.all([import(U('app')),import(U('auth')),import(U('firestore'))]);const app=A.initializeApp(CFG);return{auth:Au.getAuth(app),Au,db:F.getFirestore(app),F}})().catch(e=>{FB=null;throw e}));
-const mail=n=>n.toLowerCase()+'@erablox.com';
+const mail=n=>n.toLowerCase()+'@bh2.erablox.com';
 const offline=e=>!e||!e.code||/network|unavailable|internal|configuration|api-key|operation-not-allowed|unauthorized-domain/.test(e.code||'');
 const msg=e=>({'auth/email-already-in-use':'That username is already taken','auth/invalid-credential':'Incorrect username or password','auth/wrong-password':'Incorrect username or password','auth/user-not-found':'Incorrect username or password','auth/weak-password':'Password must be at least 6 characters','auth/too-many-requests':'Too many tries. Wait a minute and try again.'})[e&&e.code]||null;
 const _su=AUTH.signup.bind(AUTH),_li=AUTH.login.bind(AUTH);
@@ -2132,18 +2132,18 @@ let was=false;setInterval(()=>{if(was&&!GAMEON){CARS.length=0;DRV=null}was=GAMEO
 const OKH='8c7cbe70fe91f6d2425303d20bb3a4cdbd949c3f61675c44ee24ac7a706cb47c';
 const RC={owner:{t:'OWNER',c:'#111',b:'#f5c518',hat:'obchh'},admin:{t:'ADMIN',c:'#fff',b:'#d32f2f',hat:'bchh'},coder:{t:'CODER',c:'#fff',b:'#2e7d32',hat:'tbchh'}};
 const HATROLE={obchh:'owner',bchh:'admin',tbchh:'coder'};
-let ROLES={};try{ROLES=JSON.parse(localStorage.getItem('bh_roles')||'{}')}catch(e){}
-const saveL=()=>{try{localStorage.setItem('bh_roles',JSON.stringify(ROLES))}catch(e){}};
-const OWNERCODES=['BH-DD8245','BH-2788C7'];const OWNN=new Set();window.roleOf=n=>{if(!n)return null;const k=String(n).toLowerCase();return OWNN.has(k)?'owner':ROLES[k]||null};
+let ROLES={};try{ROLES=JSON.parse(localStorage.getItem('bh2_roles')||'{}')}catch(e){}
+const saveL=()=>{try{localStorage.setItem('bh2_roles',JSON.stringify(ROLES))}catch(e){}};
+const OWNERCODES=[];const OWNN=new Set();window.roleOf=n=>{if(!n)return null;const k=String(n).toLowerCase();return OWNN.has(k)?'owner':ROLES[k]||null};
 const sha=async t=>{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')};
 window.codeOf=async n=>'BH-'+(await sha('bhcode:'+String(n).toLowerCase())).slice(0,6).toUpperCase();
 // online sync through the Erablox Firebase (if reachable)
 let F=null;const V='10.8.0',U=m=>`https://www.gstatic.com/firebasejs/${V}/firebase-${m}.js`;
 async function fire(){if(F)return F;const [A,Fs]=await Promise.all([import(U('app')),import(U('firestore'))]);let app;try{app=A.getApp()}catch(e){app=A.initializeApp({apiKey:"AIzaSyDZAjauAbq0tsLh1EZtaUp8-O9wbZmX4A8",authDomain:"erablox0.firebaseapp.com",projectId:"erablox0",storageBucket:"erablox0.firebasestorage.app",messagingSenderId:"747146722972",appId:"1:747146722972:web:2643f95690cb76c3bfb759"})}return F={db:Fs.getFirestore(app),Fs}}
-fire().then(f=>f.Fs.onSnapshot(f.Fs.collection(f.db,'bh_roles'),s=>{const r={};s.forEach(d=>{const v=d.data();if(v&&RC[v.role])r[d.id]=v.role});ROLES=r;saveL();refresh()})).catch(()=>{});
-async function publishCode(){if(!P.name)return;const c=await codeOf(P.name);try{const f=await fire();await f.Fs.setDoc(f.Fs.doc(f.db,'bh_codes',c),{name:P.name})}catch(e){}return c}
-async function setRole(name,role){const k=name.toLowerCase();if(role)ROLES[k]=role;else delete ROLES[k];saveL();refresh();try{const f=await fire();if(role)await f.Fs.setDoc(f.Fs.doc(f.db,'bh_roles',k),{role,by:P.name,at:Date.now()});else await f.Fs.deleteDoc(f.Fs.doc(f.db,'bh_roles',k));return true}catch(e){return false}}
-async function nameFromCode(code){code=code.trim().toUpperCase();try{const f=await fire();const d=await f.Fs.getDoc(f.Fs.doc(f.db,'bh_codes',code));if(d.exists())return d.data().name}catch(e){}
+fire().then(f=>f.Fs.onSnapshot(f.Fs.collection(f.db,'bh2_roles'),s=>{const r={};s.forEach(d=>{const v=d.data();if(v&&RC[v.role])r[d.id]=v.role});ROLES=r;saveL();refresh()})).catch(()=>{});
+async function publishCode(){if(!P.name)return;const c=await codeOf(P.name);try{const f=await fire();await f.Fs.setDoc(f.Fs.doc(f.db,'bh2_codes',c),{name:P.name})}catch(e){}return c}
+async function setRole(name,role){const k=name.toLowerCase();if(role)ROLES[k]=role;else delete ROLES[k];saveL();refresh();try{const f=await fire();if(role)await f.Fs.setDoc(f.Fs.doc(f.db,'bh2_roles',k),{role,by:P.name,at:Date.now()});else await f.Fs.deleteDoc(f.Fs.doc(f.db,'bh2_roles',k));return true}catch(e){return false}}
+async function nameFromCode(code){code=code.trim().toUpperCase();try{const f=await fire();const d=await f.Fs.getDoc(f.Fs.doc(f.db,'bh2_codes',code));if(d.exists())return d.data().name}catch(e){}
  try{const accs=JSON.parse(localStorage.getItem('bh_accounts')||'{}');for(const k in accs){const n=accs[k].name||k;if(await codeOf(n)===code)return n}}catch(e){}return null}
 // ---- badge html ----
 const VB='<svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align:-2px;margin-left:3px"><path fill="#00a2ff" d="M12 1l2.6 2.2 3.4-.4.9 3.3 3 1.7-1.2 3.2 1.2 3.2-3 1.7-.9 3.3-3.4-.4L12 23l-2.6-2.2-3.4.4-.9-3.3-3-1.7L3.3 13 2.1 9.8l3-1.7.9-3.3 3.4.4z"/><path fill="#fff" d="M10.3 15.6 7 12.3l1.4-1.4 1.9 1.9 5.3-5.3L17 8.9z"/></svg>';
@@ -2209,8 +2209,8 @@ window.myFriends=()=>FR.friends;
 let FS=null;const fsv='10.8.0',FU=m=>`https://www.gstatic.com/firebasejs/${fsv}/firebase-${m}.js`;
 async function fs(){if(FS)return FS;const [A,F]=await Promise.all([import(FU('app')),import(FU('firestore'))]);let app;try{app=A.getApp()}catch(e){app=A.initializeApp({apiKey:"AIzaSyDZAjauAbq0tsLh1EZtaUp8-O9wbZmX4A8",authDomain:"erablox0.firebaseapp.com",projectId:"erablox0",storageBucket:"erablox0.firebasestorage.app",messagingSenderId:"747146722972",appId:"1:747146722972:web:2643f95690cb76c3bfb759"})}return FS={db:F.getFirestore(app),F}}
 let unsub=null;
-async function watch(){loadL();draw();if(unsub){unsub();unsub=null}try{const f=await fs();unsub=f.F.onSnapshot(f.F.doc(f.db,'bh_friends',P.name.toLowerCase()),d=>{if(d.exists()){const v=d.data();FR={friends:v.friends||[],incoming:v.incoming||[],outgoing:v.outgoing||[]};saveL();draw()}})}catch(e){}}
-async function upd(name,fn){const k=name.toLowerCase();try{const f=await fs();const ref=f.F.doc(f.db,'bh_friends',k);const d=await f.F.getDoc(ref);const v=Object.assign({friends:[],incoming:[],outgoing:[]},d.exists()?d.data():{});fn(v);await f.F.setDoc(ref,v);return true}catch(e){return false}}
+async function watch(){loadL();draw();if(unsub){unsub();unsub=null}try{const f=await fs();unsub=f.F.onSnapshot(f.F.doc(f.db,'bh2_friends',P.name.toLowerCase()),d=>{if(d.exists()){const v=d.data();FR={friends:v.friends||[],incoming:v.incoming||[],outgoing:v.outgoing||[]};saveL();draw()}})}catch(e){}}
+async function upd(name,fn){const k=name.toLowerCase();try{const f=await fs();const ref=f.F.doc(f.db,'bh2_friends',k);const d=await f.F.getDoc(ref);const v=Object.assign({friends:[],incoming:[],outgoing:[]},d.exists()?d.data():{});fn(v);await f.F.setDoc(ref,v);return true}catch(e){return false}}
 const uniq=a=>[...new Set(a)];
 async function request(name){name=name.trim();const me=P.name.toLowerCase(),k=name.toLowerCase();if(!/^[A-Za-z0-9_]{3,20}$/.test(name))return 'Enter a valid username';if(k===me)return "You can't friend yourself";if(FR.friends.includes(k))return 'You are already friends';
  if(FR.incoming.includes(k))return accept(k);FR.outgoing=uniq([...FR.outgoing,k]);saveL();draw();const a=await upd(me,v=>{v.outgoing=uniq([...v.outgoing,k])}),b=await upd(k,v=>{v.incoming=uniq([...v.incoming,me])});return a&&b?'Friend request sent to '+name:'Saved on this device only (could not reach the friends server)'}
