@@ -668,11 +668,12 @@ function drawChar(e){if(e.dead)return;if(e.dance&&(inp.x||inp.y||Object.values(K
 let ROOMK='obby',NETR=null,myPeer=null;const remote=new Map();let myHits=[],hitSeq=0,myChat=null,myKill=null,killSeq=0,myFx=[],fxSeq=0,netT=0;
 function rents(){return [...remote.values()].filter(e=>!e.gone)}
 function soloBots(){return remote.size===0}
-async function netJoin(){try{if(!window.claude||!claude.use)return;const room=await claude.use('room');if(!room){devlog('warn','Multiplayer unavailable in this view (playing with bots).');return}
- const sid=('bh-'+ROOMK).toLowerCase().replace(/[^a-z0-9_.-]/g,'').slice(0,48);NETR=await room.join(sid);devlog('info','Joined the public server');LOBBY&&LOBBY.presence({n:P.name,g:ROOMK}).catch(()=>{});
- NETR.onPeers(ch=>{for(const p of ch.peers){if(p.sameTab){myPeer=p.peer;continue}if(p.kind!=='viewer')continue;netPeer(p)}
-  for(const p of ch.left){const e=remote.get(p.peer);if(e){say(null,`${e.name} left the game`,'sys');remote.delete(p.peer);rows()}}},err=>devlog('err','Room error: '+err.code));
-}catch(e){devlog('warn','Multiplayer unavailable: '+(e.code||e.message));NETR=null}}
+async function netJoin(){const sid=('bh-'+ROOMK).toLowerCase().replace(/[^a-z0-9_.-]/g,'').slice(0,48);
+ const onPeers=ch=>{for(const p of ch.peers){if(p.sameTab){myPeer=p.peer;continue}if(p.kind!=='viewer')continue;netPeer(p)}for(const p of ch.left){const e=remote.get(p.peer);if(e){say(null,`${e.name} left the game`,'sys');remote.delete(p.peer);rows()}}};
+ let room=null;try{if(window.claude&&claude.use)room=await claude.use('room')}catch(e){}
+ if(room){try{NETR=await room.join(sid)}catch(e){devlog('warn','Named server unavailable ('+(e.code||e.message)+'), using shared lobby');NETR=room}
+  NETR.onPeers(onPeers,err=>devlog('err','Room error: '+err.code));LOBBY&&LOBBY.presence({n:P.name,g:ROOMK}).catch(()=>{});devlog('info','Joined the public server');return}
+ try{await mqttConnect();NETR=mqttRoom(sid);devlog('info','Joined the public server (web relay)')}catch(e){devlog('warn','Multiplayer unavailable: '+(e.message||e));NETR=null}}
 function netLeave(){LOBBY&&LOBBY.presence({g:null}).catch(()=>{});if(NETR){NETR.leave().catch(()=>{});NETR=null}remote.clear()}
 function clean(s,n){return String(s||'').replace(/[^\w .!?,'#-]/g,'').slice(0,n)}
 function netPeer(p){const s=p.presence||{};if(typeof s.x!=='number'||s.mode!==ROOMK)return;let e=remote.get(p.peer);
@@ -687,7 +688,7 @@ function fxBoom(x,y,z,R0){playAt('boom',{x,z},1);booms.push({x,y,z,t:0,r:R0});pu
 function sendHit(e,a){myHits.push({to:e.peer,a:Math.round(a),q:++hitSeq});myHits=myHits.slice(-8)}
 function netStep(dt){for(const e of remote.values()){if(e.tx===undefined)continue;const k=Math.min(1,dt*12);e.x+=(e.tx-e.x)*k;e.y+=(e.ty-e.y)*k;e.z+=(e.tz-e.z)*k;if(e.walkOn)e.walk+=dt*10;else e.walk*=.8}
  netT-=dt;if(!NETR||netT>0)return;netT=.08;
- const A=AV;NETR.presence({mode:ROOMK,n:P.name,x:+P.x.toFixed(2),y:+P.y.toFixed(2),z:+P.z.toFixed(2),f:+P.face.toFixed(2),w:!!P.moving,air:!P.ground,hp:P.hp|0,dead:!!P.dead,sw:P.swing>0,dn:P.dance||null,ko:P.ko,wo:P.wo,t:tools[tool-1]||null,
+ const A=AV;NETR.presence({g:ROOMK,mode:ROOMK,n:P.name,x:+P.x.toFixed(2),y:+P.y.toFixed(2),z:+P.z.toFixed(2),f:+P.face.toFixed(2),w:!!P.moving,air:!P.ground,hp:P.hp|0,dead:!!P.dead,sw:P.swing>0,dn:P.dance||null,ko:P.ko,wo:P.wo,t:tools[tool-1]||null,
   av:[A.head,A.torso,A.armL,A.armR,A.legL,A.legR],fc:AV.face|0,bd:AV.body||'noob',hits:myHits,kill:myKill,chat:myChat,fx:myFx}).catch(()=>{})}
 
 // ===== 2017-style core UI =====
@@ -930,12 +931,26 @@ $('sExit').onclick=closeStudio;$('sdx').onclick=()=>{$('sdlg').classList.remove(
 addEventListener('keydown',e=>{if(!STUDIO||!BUILD||/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))return;if((e.key==='Delete'||e.key==='Backspace')&&SEL){delete CR.cells[SEL];SEL=null;crSave();rebuildBuild();props();sOut('Deleted Part')}});
 
 
+// ===== web relay multiplayer (used outside Claude, e.g. GitHub Pages) =====
+const MQTT_URL='wss://broker.emqx.io:8084/mqtt',MQID='bh'+Math.random().toString(36).slice(2,10);let MQ=null,MQL=new Map();
+function loadScript(src){return new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=no;document.head.appendChild(s)})}
+async function mqttConnect(){if(MQ)return MQ;if(!window.mqtt)await loadScript('https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js');
+ return new Promise((ok,no)=>{const c=mqtt.connect(MQTT_URL,{clientId:MQID,clean:true,connectTimeout:8000,reconnectPeriod:3000});const t=setTimeout(()=>no(new Error('relay timeout')),9000);
+  c.on('connect',()=>{clearTimeout(t);if(!MQ){MQ=c;c.subscribe('brickhub/v1/lobby/+');c.on('message',(tp,pl)=>{if(!tp.startsWith('brickhub/v1/lobby/'))return;try{const s=JSON.parse(pl.toString());MQL.set(tp.slice(18),{g:s.g,t:Date.now()})}catch(e){}});
+   setInterval(()=>{if(MQ)MQ.publish('brickhub/v1/lobby/'+MQID,JSON.stringify({g:GAMEON?ROOMK:null}))},3000);ok(c)}});c.on('error',()=>{})})}
+function mqttRoom(sid){const base='brickhub/v1/g/'+sid+'/',peers=new Map();let last=0;MQ.subscribe(base+'+');myPeer=MQID;
+ const left=id=>{const e=remote.get(id);if(e){say(null,`${e.name} left the game`,'sys');remote.delete(id);rows()}};
+ const onMsg=(tp,pl)=>{if(!tp.startsWith(base))return;const id=tp.slice(base.length);if(id===MQID)return;let s;try{s=JSON.parse(pl.toString())}catch(e){return}
+  if(!s||s.bye){peers.delete(id);left(id);return}peers.set(id,Date.now());netPeer({peer:id,presence:s,kind:'viewer'})};
+ MQ.on('message',onMsg);const iv=setInterval(()=>{const n=Date.now();for(const [id,t] of peers)if(n-t>6000){peers.delete(id);left(id)}},1000);
+ return{presence(o){const n=Date.now();if(n-last>=90){last=n;MQ.publish(base+MQID,JSON.stringify(o))}return Promise.resolve()},leave(){clearInterval(iv);try{MQ.publish(base+MQID,JSON.stringify({bye:1}));MQ.unsubscribe(base+'+');MQ.removeListener('message',onMsg)}catch(e){}return Promise.resolve()}}}
+
 // ===== one public server per game; lobby only tracks player counts =====
 let LOBBY=null;const SERVER=null;
 async function lobbyInit(){try{if(!window.claude||!claude.use)return;LOBBY=await claude.use('room');if(!LOBBY)return;LOBBY.presence({n:P.name,g:null}).catch(()=>{});LOBBY.onPeers(()=>{if($('det').classList.contains('open'))serverList()},()=>{})}catch(e){LOBBY=null}}
 function gameKey(){return pickG==='custom'?'c-'+crSlug(GAMES.custom.t):pickG}
-function serverList(){const el=$('pcount');if(!el)return;if(!LOBBY){el.textContent='';return}const gk=gameKey();let n=0;for(const p of LOBBY.peers())if((p.presence||{}).g===gk)n++;el.textContent=n?n+' playing now':'No one is playing right now'}
-setTimeout(lobbyInit,0);
+function serverList(){const el=$('pcount');if(!el)return;const gk=gameKey();let n=0;if(LOBBY){for(const p of LOBBY.peers())if((p.presence||{}).g===gk)n++}else if(MQ){const now=Date.now();for(const v of MQL.values())if(v.g===gk&&now-v.t<8000)n++}else{el.textContent='';return}el.textContent=n?n+' playing now':'No one is playing right now'}
+setTimeout(lobbyInit,0);setTimeout(()=>{if(!LOBBY&&!(window.claude&&claude.use))mqttConnect().catch(()=>{})},1500);
 const editable=t=>t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable);
 ['contextmenu','copy','cut','dragstart','selectstart'].forEach(ev=>document.addEventListener(ev,e=>{if(!editable(e.target)&&!(STUDIO&&ev!=='contextmenu'&&editable(document.activeElement)))e.preventDefault()}));
 let pickG='sword';
