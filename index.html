@@ -1905,9 +1905,9 @@ async function send(){const link=$('apLink').value.trim(),info=$('apInfo').value
   await f.F.setDoc(f.F.doc(f.db,'Review',id),a);localStorage.setItem('last_review_id',id);a.id=id;setApp(a);statusUI(a);play('b')}
  catch(e){$('apErr').textContent='Could not send: '+(e.code||e.message||'no connection')}$('apSend').disabled=false}
 function back(){if(unsub){unsub();unsub=null}card.style.display='none';$('lland').style.display='flex'}
-$('lCreate').onclick=()=>{play('b');$('lland').style.display='none';$('acard').style.display='none';const a=getApp();card.style.display='flex';if(a&&a.id)statusUI(a);else formUI()};
+$('lCreate').onclick=()=>{play('b');showForm('signup')};
 // the "Sign Up" link inside the log-in card also goes through the application
-$('aSw').onclick=()=>{if(aMode==='login'){const a=getApp();if(!(a&&a.status==='accepted')){$('acard').style.display='none';$('lCreate').onclick();return}}aMode=aMode==='login'?'signup':'login';authUI();play('b')};
+$('aSw').onclick=()=>{aMode=aMode==='login'?'signup':'login';authUI();play('b')};
 })();
 // ===== 2016/2017-style landing page (sign up + log in) =====
 (function(){
@@ -1955,7 +1955,7 @@ $('l16go').onclick=async()=>{const n=$('l16u').value.trim(),p=$('l16p').value;$(
 $('l16p').addEventListener('keydown',e=>{if(e.key==='Enter')$('l16go').click()});
 $('s16li').onclick=()=>{$('l16u').focus()};
 $('s16go').onclick=async()=>{$('s16err').textContent='';const okU=vu(),okP=vp(),okP2=vp2(),b=$('s16m').value&&$('s16d').value&&$('s16y').value;$('s16bv').textContent=b?'':'Invalid birthday';if(!gen)$('s16gv').textContent='Gender is required';if(!okU){$('s16uv').textContent=$('s16uv').textContent||'Enter a username'}if(!(okU&&okP&&okP2&&b&&gen))return;
- let app=null;try{app=JSON.parse(localStorage.getItem('erablox_app')||'null')}catch(e){}if(!(app&&app.status==='accepted')){off();$('lCreate').onclick();toast('Send an application first. When it is accepted you can sign up.');return}
+ 
  $('s16go').disabled=true;try{const n=await AUTH.signup($('s16u').value.trim(),$('s16p').value);try{localStorage.setItem('bh_profile_'+n.toLowerCase(),JSON.stringify({bday:[+$('s16y').value,+$('s16m').value,+$('s16d').value],gender:gen===2?'male':'female'}))}catch(e){}AUTH.setSession(n);off();enterAs(n)}catch(e){$('s16err').textContent=typeof e==='string'?e:'Something went wrong'}$('s16go').disabled=false};
 // back buttons on the old cards return to this page
 ['aBack'].forEach(id=>{const b=$(id);if(b)b.addEventListener('click',()=>{$('acard').style.display='none';on()})});
