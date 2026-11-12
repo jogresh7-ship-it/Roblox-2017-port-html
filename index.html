@@ -464,7 +464,7 @@ function frame(now){if(!GAMEON){last=now;requestAnimationFrame(frame);return}
  FOOT.volume=settings.vol/10*.6;if(m>.05&&P.ground&&!P.dead){if(FOOT.paused)FOOT.play().catch(()=>{})}else if(!FOOT.paused)FOOT.pause();
  if(P.dead){wx=wz=0}P.cool-=dt;P.ff=Math.max(0,(P.ff||0)-dt);stepDebris(P,dt);rents().forEach(e=>{e.ff=Math.max(0,(e.ff||0)-dt);stepDebris(e,dt)});P.swing=Math.max(0,P.swing-dt);
  const ox=P.x,oz=P.z,land=move(P,wx,wz,dt,9);if(SHIFTLOCK)P.face=cam.yaw;if(target&&Math.hypot(P.x-ox,P.z-oz)<sp2*.2&&m>.05)target=null;
- if(land<-8){play('l');bump(P,P.y<.05&&MODE==='obby',.5)}if(!P.ground&&P.vy<-12&&!P._sw){P._sw=1;play('swoosh',.5)}if(P.ground)P._sw=0;if(land<-25)setTimeout(()=>play('getup',.7),250);if(!P.ground&&P.vy<-18&&!P.dead){FALLW.volume=settings.vol/10*.6;if(FALLW.paused)FALLW.play().catch(()=>{})}else if(!FALLW.paused){FALLW.pause();FALLW.currentTime=0}if(land<-22&&MODE==='obby'){devlog('warn','Fall damage: '+Math.round((-land-22)*4));hurt(P,Math.round((-land-22)*4),null)}
+ if(land<-8)play('l');if(!P.ground&&P.vy<-24&&!P._sw){P._sw=1;play('swoosh',.5)}if(P.ground)P._sw=0;if(land<-25)setTimeout(()=>play('getup',.7),250);if(!P.ground&&P.vy<-18&&!P.dead){FALLW.volume=settings.vol/10*.6;if(FALLW.paused)FALLW.play().catch(()=>{})}else if(!FALLW.paused){FALLW.pause();FALLW.currentTime=0}if(land<-22&&MODE==='obby'){devlog('warn','Fall damage: '+Math.round((-land-22)*4));hurt(P,Math.round((-land-22)*4),null)}
  stepGivers();if(running){if(soloBots())npcs.forEach(e=>aiStep(e,dt));netStep(dt);stepShots(dt);stepBombs(dt)}stepParts(dt);
  coins.forEach(c=>{if(!c.got&&Math.hypot(c.x-P.x,c.z-P.z)<1.1&&Math.abs(c.y-(P.y+1.5))<2){c.got=1;score++}});
  if(false)document.getElementById('coins').textContent=`★ ${score} / ${coins.length}`;
