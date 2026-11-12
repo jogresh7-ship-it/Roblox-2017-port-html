@@ -1851,7 +1851,7 @@ function logout(){AUTH.setSession(null);aMode='login';authUI();$('auth').style.d
 const showForm=m=>{aMode=m;authUI();$('lland').style.display='none';$('acard').style.display='flex';setTimeout(()=>$('aU').focus(),50)};
 $('lCreate').onclick=()=>{play('b');showForm('signup')};$('lSign').onclick=()=>{play('b');showForm('login')};$('aBack').onclick=()=>{$('acard').style.display='none';$('lland').style.display='flex'};
 document.querySelectorAll('#hub .sitem').forEach(it=>it.onclick=()=>{const g=it.dataset.go;if(g==='logout'){logout();return}if(g==='friends'){toast('Friends are coming soon');return}const el=$(g);el&&el.click();document.querySelectorAll('#hub .sitem').forEach(x=>x.classList.toggle('on',x===it))});
-$('hubName').style.cursor='pointer';$('hubName').title='Log out';$('hubName').onclick=()=>{if(confirm0())logout()};function confirm0(){return true}
+$('hubName').style.cursor='pointer';$('hubName').title='Your profile & settings';$('hubName').onclick=()=>{$('navSet').onclick()};function confirm0(){return true}
 // ===== Erablox: blue sign-up look, application step, Firebase online accounts =====
 (function(){
 const CFG={apiKey:"AIzaSyDZAjauAbq0tsLh1EZtaUp8-O9wbZmX4A8",authDomain:"erablox0.firebaseapp.com",projectId:"erablox0",storageBucket:"erablox0.firebasestorage.app",messagingSenderId:"747146722972",appId:"1:747146722972:web:2643f95690cb76c3bfb759"};
