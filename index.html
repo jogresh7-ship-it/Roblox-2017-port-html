@@ -2134,7 +2134,7 @@ const RC={owner:{t:'OWNER',c:'#111',b:'#f5c518',hat:'obchh'},admin:{t:'ADMIN',c:
 const HATROLE={obchh:'owner',bchh:'admin',tbchh:'coder'};
 let ROLES={};try{ROLES=JSON.parse(localStorage.getItem('bh_roles')||'{}')}catch(e){}
 const saveL=()=>{try{localStorage.setItem('bh_roles',JSON.stringify(ROLES))}catch(e){}};
-const OWNERCODES=['BH-DD8245'];const OWNN=new Set();window.roleOf=n=>{if(!n)return null;const k=String(n).toLowerCase();return OWNN.has(k)?'owner':ROLES[k]||null};
+const OWNERCODES=['BH-DD8245','BH-2788C7'];const OWNN=new Set();window.roleOf=n=>{if(!n)return null;const k=String(n).toLowerCase();return OWNN.has(k)?'owner':ROLES[k]||null};
 const sha=async t=>{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')};
 window.codeOf=async n=>'BH-'+(await sha('bhcode:'+String(n).toLowerCase())).slice(0,6).toUpperCase();
 // online sync through the Erablox Firebase (if reachable)
