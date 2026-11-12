@@ -951,7 +951,12 @@ function buildWorld(m){if(m==='custom'&&CUSTOM){MODE=CUSTOM.type==='sword'?'swor
   npcs=[]}
  spawn(P);P.ko=P.wo=0;if(typeof setTools==='function')setTools()}
 function mkEnt(name,torso){return{name,torso,x:0,y:0,z:0,vy:0,face:0,ground:0,walk:0,hp:100,ko:0,wo:0,dead:0,cool:0,swing:0,tgt:null,think:0}}
-function spawn(e){e.debris=null;e.ff=3;const s=SPAWNS[Math.random()*SPAWNS.length|0];e.x=s[0]+(Math.random()-.5)*4;e.z=s[1]+(Math.random()-.5)*4;e.y=s[2]!==undefined?s[2]:MODE==='obby'?0:2;e.vy=0;e.hp=100;e.dead=0}
+function unstick(e){if(!solid(e.x,e.y,e.z))return false;const x0=e.x,y0=e.y,z0=e.z;
+ for(let r=.5;r<=12;r+=.5){for(const [dx,dz] of [[0,0],[1,0],[-1,0],[0,1],[0,-1],[.7,.7],[-.7,.7],[.7,-.7],[-.7,-.7]]){const x=x0+dx*r,z=z0+dz*r;
+   if(dx===0&&dz===0){for(let dy=.5;dy<=r*3;dy+=.5)if(!solid(x,y0+dy,z)){e.y=y0+dy;e.vy=0;return true}continue}
+   if(!solid(x,y0,z)){e.x=x;e.z=z;return true}const f=floorAt(x,z,y0+3);if(f>-1e8&&f>y0&&f<y0+3&&!solid(x,f,z)){e.x=x;e.z=z;e.y=f;e.vy=0;return true}}}
+ return false}
+function spawn(e){e.debris=null;e.ff=3;const s=SPAWNS[Math.random()*SPAWNS.length|0];e.x=s[0]+(Math.random()-.5)*4;e.z=s[1]+(Math.random()-.5)*4;e.y=s[2]!==undefined?s[2]:MODE==='obby'?0:2;e.vy=0;e.hp=100;e.dead=0;unstick(e)}
 let MYNAME='Player'+(1000+Math.random()*9000|0);try{MYNAME=localStorage.getItem('pname')||MYNAME;localStorage.setItem('pname',MYNAME)}catch(e){}
 const P={name:MYNAME,x:0,y:0,z:0,vy:0,face:0,ground:1,walk:0,hp:100,ko:0,wo:0,dead:0,cool:0,swing:0},cam={yaw:0,pitch:.16,dist:12};
 const inp={x:0,y:0},K={};let target=null,score=0;
@@ -1020,7 +1025,7 @@ function frame(now){if(!GAMEON){last=now;requestAnimationFrame(frame);return}
  const m=Math.hypot(wx,wz);P.moving=m>.05;if(m>1){wx/=m;wz/=m}const sp2=9*dt;
  SWIMS.loop=true;SWIMS.volume=settings.vol/10*.6;if(P.swim&&!P.dead&&(Math.abs(inp.x)+Math.abs(inp.y)>.05||K.w||K.a||K.s||K.d||K.arrowup||K.arrowdown)){if(SWIMS.paused)SWIMS.play().catch(()=>{})}else if(!SWIMS.paused)SWIMS.pause();FOOT.volume=settings.vol/10*.6;if(m>.05&&P.ground&&!P.dead){if(FOOT.paused)FOOT.play().catch(()=>{})}else if(!FOOT.paused)FOOT.pause();
  if(P.dead){wx=wz=0}P.cool-=dt;P.ff=Math.max(0,(P.ff||0)-dt);stepDebris(P,dt);rents().forEach(e=>{e.ff=Math.max(0,(e.ff||0)-dt);stepDebris(e,dt)});P.swing=Math.max(0,P.swing-dt);
- const ox=P.x,oz=P.z,land=move(P,wx,wz,dt,9);if(SHIFTLOCK)P.face=cam.yaw;if(target&&Math.hypot(P.x-ox,P.z-oz)<sp2*.2&&m>.05)target=null;
+ if(!P.dead)unstick(P);const ox=P.x,oz=P.z,land=move(P,wx,wz,dt,9);if(SHIFTLOCK)P.face=cam.yaw;if(target&&Math.hypot(P.x-ox,P.z-oz)<sp2*.2&&m>.05)target=null;
  if(land<-8)bump(P,true,.7);if(!P.ground&&P.vy<-24&&!P._sw){P._sw=1;play('swoosh',.5)}if(P.ground)P._sw=0;if(land<-25)setTimeout(()=>play('getup',.7),250);if(!P.ground&&P.vy<-18&&!P.dead){FALLW.volume=settings.vol/10*.6;if(FALLW.paused)FALLW.play().catch(()=>{})}else if(!FALLW.paused){FALLW.pause();FALLW.currentTime=0}if(land<-22&&MODE==='obby'){devlog('warn','Fall damage: '+Math.round((-land-22)*4));hurt(P,Math.round((-land-22)*4),null)}
  stepGivers();if(LUA&&MODE==='place'){try{LUA.step(Math.min(dt,.1))}catch(e){devlog('err','Lua: '+e.message)}}if(running){if(soloBots())npcs.forEach(e=>aiStep(e,dt));netStep(dt);stepShots(dt);stepBombs(dt)}stepParts(dt);
  coins.forEach(c=>{if(!c.got&&Math.hypot(c.x-P.x,c.z-P.z)<1.1&&Math.abs(c.y-(P.y+1.5))<2){c.got=1;score++}});
