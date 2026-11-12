@@ -551,6 +551,8 @@ function drawDebris(e){if(!e.debris)return;const ov=e===P?AV:e.remote?e.av:{tors
 const FFIMG=(()=>{const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d'),g2=x.createRadialGradient(64,64,30,64,64,64);g2.addColorStop(0,'rgba(120,180,255,0)');g2.addColorStop(.75,'rgba(120,190,255,.25)');g2.addColorStop(.95,'rgba(170,220,255,.55)');g2.addColorStop(1,'rgba(170,220,255,0)');x.fillStyle=g2;x.fillRect(0,0,128,128);c.complete=true;return c})();
 function drawFF(e){if(!(e.ff>0)||e.dead)return;sprite(FFIMG,e.x,e.y+1.45,e.z,4.2,0);if(Math.random()<.5)puff(e.x+(Math.random()-.5)*2.4,e.y+Math.random()*3,e.z+(Math.random()-.5)*2.4,PSPARK,1,.6,.35,.5)}
 
+// mirror baked animations front/back (rig forward was opposite of mesh forward)
+for(const an of Object.values(NOOB.anims))for(const fr of an.f)for(const k in fr){const m=fr[k];m[2]=-m[2];m[5]=-m[5];m[6]=-m[6];m[7]=-m[7];m[11]=-m[11]}
 function animFrame(name,t,loop){const A=NOOB.anims[name];if(!A)return null;let u=loop?((t%A.d)+A.d)%A.d:Math.min(t,A.d);const fpos=u/A.d*(A.f.length-1),i=Math.min(A.f.length-2,Math.floor(fpos)),a=fpos-i,f0=A.f[i],f1=A.f[i+1],o={};
  for(const k in f0){const p=f0[k],q=f1[k];o[k]=p.map((v,n)=>v+(q[n]-v)*a)}return o}
 function animMats(e,hold){const dt=Math.min(.1,T-(e._t||T));e._t=T;const moving=e===P?!!P.moving:e.remote?!!e.walkOn:Math.abs(Math.sin(e.walk))>.01;
@@ -560,7 +562,7 @@ function animMats(e,hold){const dt=Math.min(.1,T-(e._t||T));e._t=T;const moving=
 function drawChar(e){if(e.dead)return;if(e.dance&&(inp.x||inp.y||Object.values(K).some(v=>v)))e.dance=null;
  const r=e.face+(e.dance==='dance'?T*6:0),sw=Math.sin(e.walk)*(e.ground?.7:.2),y=e.y,X=e.x,Z=e.z,cs=Math.cos(r),sn=Math.sin(r);
  const tn=e===P?tools[tool-1]:e.remote?e.tool:(MODE==='sword'?'Sword':null),hold=!!tn;
- const ang={};if(hold&&e.swing>0)ang.armR=-Math.PI*.95;if(e.dance==='wave'){ang.armL=-Math.PI*.9+Math.sin(T*8)*.3}
+ const ang={};if(hold)ang.armR=e.swing>0?-Math.PI*.95:-Math.PI/2;if(e.dance==='wave'){ang.armL=-Math.PI*.9+Math.sin(T*8)*.3}
  const mats=animMats(e,hold);
  drawNoob(e,r,X,y,Z,ang,e===P?AV:e.remote?e.av:{torso:e.torso},mats);
  const part=(x,yy,z,w,h,d,c)=>cube(x,yy,z,w,h,d,c,r,X,Z,false),I=[1,0,0],U=[0,1,0],Fw=[0,0,1];
