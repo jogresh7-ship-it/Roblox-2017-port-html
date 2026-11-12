@@ -752,6 +752,14 @@ return {create}})();
 #det .dclose{color:#757575}
 @media (max-width:760px){#det .dbox{flex-direction:column}#det .th.big{width:100%!important;height:56vw!important}.dsp{margin:16px 0}.drate{margin-top:16px}.dstats{flex-wrap:wrap}.dstats div{flex:0 0 33%;margin:6px 0}.dtabs span{font-size:16px;padding:10px 4px}.grh{margin-left:4px}.car{display:none}.card.gc,.card.gc .th{width:150px}.card.gc .th{height:150px}.card.gc .ct{font-size:16px}}
 </style>
+<style id="mobscroll">
+@media (max-width:760px){#hub #avpage{flex-direction:column!important;padding:12px!important;gap:12px!important}#avview{flex:none!important;width:100%!important;height:52vh!important;min-height:0!important}.avside{width:100%!important}#crpage{flex-direction:column!important;overflow:auto}}
+
+#hub,#hub *,#det,#det *,#menu #page,#menu #page *,#log,.avside,.avside *,#crpage,#crpage *,#review,#review *,.sleft,.sright,.sout,#devlog,#plist{touch-action:pan-x pan-y!important}
+.gtrack{touch-action:pan-x pan-y!important;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+#hub,#det{-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+#det{overflow-y:auto!important}#crc,#c,#glc,#stick,#jump{touch-action:none!important}
+</style>
 <link rel="manifest" href="manifest.webmanifest">
 </head><body><canvas id="c"></canvas>
 <div id="top" class="ui">
