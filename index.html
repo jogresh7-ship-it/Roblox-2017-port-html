@@ -222,6 +222,7 @@ body.studio.splay #bar{display:flex!important}
 .srvh{margin:14px 0 6px;font-size:15px}#srvs{max-height:150px;overflow:auto}.srv{display:flex;align-items:center;gap:10px;padding:7px 8px;border-bottom:1px solid #e3e3e3;font-size:13px}.srv b{flex:1}.srv span:not(.mb){color:#757575}#det .srv .mb{min-width:0;padding:4px 12px;font-size:13px;background:#02b757!important;color:#fff!important;border:0!important;border-image:none!important;border-radius:3px}.srvnote{color:#757575;font-size:13px;padding:6px 0}
 @media (pointer:coarse){#stick,#jump{display:block!important}#chat{width:min(380px,60vw)}#cin{font-size:16px}.slot{width:54px;height:54px}#plist{width:170px}#bui{top:4px}}
 @media (max-width:700px){#hub .nav{gap:10px;padding:0 8px;overflow-x:auto}#hub .nav input{display:none}.dbox{padding:14px}#plist{display:none}#chat{width:70vw}#log{height:90px}#menu #page,#menu #tabs,#menu #btns{width:96vw}#btns{flex-wrap:wrap}#btns .mb{min-width:40%}}
+#bui,#bui.open{display:none!important}
 </style></head><body><canvas id="c"></canvas>
 <div id="top" class="ui">
  <div class="tb" id="bMenu"><img></div><div class="tb on" id="bChat"><img></div><div class="tb on" id="bPack"><img></div><div class="tb on" id="bList"><img></div>
@@ -878,7 +879,7 @@ function drawBuildExtras(){const off=-GN/2,sx=(CR.spawn[0]+off)*2+1,sz=(CR.spawn
  if(ghost&&ghost.erase){const b=boxes.find(b=>b.key===ghost.erase);if(b)cube(0,b.y-.02,0,2.1,b.h+.04,2.1,[255,60,60],0,b.x,b.z,false)}
  if(MODE!=='obby'){for(let i=-GN/2;i<=GN/2;i+=4){poly([[i*2,0,-GN],[i*2+.06,0,-GN],[i*2+.06,0,GN],[i*2,0,GN]],'rgba(255,255,255,.25)');poly([[-GN,0,i*2],[GN,0,i*2],[GN,0,i*2+.06],[-GN,0,i*2+.06]],'rgba(255,255,255,.25)')}}}
 function openBuild(){crSave();$('hub').style.display='none';GAMEON=true;BUILD=true;running=false;MODE=$('crType').value==='sword'?'sword':'obby';P.dead=1;P.debris=null;rebuildBuild();
- cam.pitch=.75;cam.dist=34;bt.x=0;bt.z=0;$('bui').classList.add('open');document.body.classList.add('building');bbar();devlog('info','Opened 3D editor')}
+ cam.pitch=.75;cam.dist=34;bt.x=0;bt.z=0;document.body.classList.add('building');bbar();devlog('info','Opened 3D editor')}
 function bbar(){$('bcols').innerHTML=BRICK.map(([n,c],i)=>`<b title="${n}" data-i="${i}" style="background:rgb(${c})" class="${i===CR.col?'on':''}"></b>`).join('');$('bcols').querySelectorAll('b').forEach(b=>b.onclick=()=>{CR.col=+b.dataset.i;bbar()});
  document.querySelectorAll('.btool').forEach(t=>t.classList.toggle('on',t.dataset.t===CR.tool));$('bH').textContent=CR.h}
 document.querySelectorAll('.btool').forEach(t=>t.onclick=()=>{CR.tool=t.dataset.t;bbar()});
