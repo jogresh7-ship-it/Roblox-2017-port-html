@@ -799,6 +799,14 @@ return {create}})();
 #auth .acard{z-index:2}.aback{color:#00a2ff;cursor:pointer;font-weight:600;align-self:flex-start;margin-bottom:-6px}
 #auth .abg,#auth .atop{display:none}
 </style>
+<style id="landform">
+#auth .acard{background:rgba(20,21,24,.72)!important;color:#fff!important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.14);border-radius:18px!important;box-shadow:0 12px 40px rgba(0,0,0,.5)!important;animation:afade .22s ease-out}
+@keyframes afade{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+#auth .acard h1{color:#fff}#auth .acard input{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.25);color:#fff}#auth .acard input::placeholder{color:rgba(255,255,255,.55)}#auth .acard input:focus{border-color:#fff}
+#auth #aGo{background:#f2f2f2;color:#222;border-radius:10px}#auth #aGo:hover{background:#fff}
+#auth .aalt{color:rgba(255,255,255,.8)}#auth .aalt a,#auth .aback{color:#9db7ff}#auth .anote{color:rgba(255,255,255,.45)}
+.lland{animation:afade .22s ease-out}
+</style>
 <link rel="manifest" href="manifest.webmanifest">
 </head><body><canvas id="c"></canvas>
 <div id="top" class="ui">
