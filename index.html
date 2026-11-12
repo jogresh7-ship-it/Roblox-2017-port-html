@@ -2124,4 +2124,55 @@ const _dp=drawOParts;drawOParts=function(){_dp.apply(this,arguments);const now=p
 let was=false;setInterval(()=>{if(was&&!GAMEON){CARS.length=0;DRV=null}was=GAMEON},500);
 })();
 
+
+// ===== roles: Owner / Admin / Coder — player codes, badges, name boards, role hats =====
+(function(){
+const OKH='8c7cbe70fe91f6d2425303d20bb3a4cdbd949c3f61675c44ee24ac7a706cb47c';
+const RC={owner:{t:'OWNER',c:'#111',b:'#f5c518',hat:'obchh'},admin:{t:'ADMIN',c:'#fff',b:'#d32f2f',hat:'bchh'},coder:{t:'CODER',c:'#fff',b:'#2e7d32',hat:'tbchh'}};
+const HATROLE={obchh:'owner',bchh:'admin',tbchh:'coder'};
+let ROLES={};try{ROLES=JSON.parse(localStorage.getItem('bh_roles')||'{}')}catch(e){}
+const saveL=()=>{try{localStorage.setItem('bh_roles',JSON.stringify(ROLES))}catch(e){}};
+window.roleOf=n=>n?ROLES[String(n).toLowerCase()]||null:null;
+const sha=async t=>{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')};
+window.codeOf=async n=>'BH-'+(await sha('bhcode:'+String(n).toLowerCase())).slice(0,6).toUpperCase();
+// online sync through the Erablox Firebase (if reachable)
+let F=null;const V='10.8.0',U=m=>`https://www.gstatic.com/firebasejs/${V}/firebase-${m}.js`;
+async function fire(){if(F)return F;const [A,Fs]=await Promise.all([import(U('app')),import(U('firestore'))]);let app;try{app=A.getApp()}catch(e){app=A.initializeApp({apiKey:"AIzaSyDZAjauAbq0tsLh1EZtaUp8-O9wbZmX4A8",authDomain:"erablox0.firebaseapp.com",projectId:"erablox0",storageBucket:"erablox0.firebasestorage.app",messagingSenderId:"747146722972",appId:"1:747146722972:web:2643f95690cb76c3bfb759"})}return F={db:Fs.getFirestore(app),Fs}}
+fire().then(f=>f.Fs.onSnapshot(f.Fs.collection(f.db,'bh_roles'),s=>{const r={};s.forEach(d=>{const v=d.data();if(v&&RC[v.role])r[d.id]=v.role});ROLES=r;saveL();refresh()})).catch(()=>{});
+async function publishCode(){if(!P.name)return;const c=await codeOf(P.name);try{const f=await fire();await f.Fs.setDoc(f.Fs.doc(f.db,'bh_codes',c),{name:P.name})}catch(e){}return c}
+async function setRole(name,role){const k=name.toLowerCase();if(role)ROLES[k]=role;else delete ROLES[k];saveL();refresh();try{const f=await fire();if(role)await f.Fs.setDoc(f.Fs.doc(f.db,'bh_roles',k),{role,by:P.name,at:Date.now()});else await f.Fs.deleteDoc(f.Fs.doc(f.db,'bh_roles',k));return true}catch(e){return false}}
+async function nameFromCode(code){code=code.trim().toUpperCase();try{const f=await fire();const d=await f.Fs.getDoc(f.Fs.doc(f.db,'bh_codes',code));if(d.exists())return d.data().name}catch(e){}
+ try{const accs=JSON.parse(localStorage.getItem('bh_accounts')||'{}');for(const k in accs){const n=accs[k].name||k;if(await codeOf(n)===code)return n}}catch(e){}return null}
+// ---- badge html ----
+const VB='<svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align:-2px;margin-left:3px"><path fill="#00a2ff" d="M12 1l2.6 2.2 3.4-.4.9 3.3 3 1.7-1.2 3.2 1.2 3.2-3 1.7-.9 3.3-3.4-.4L12 23l-2.6-2.2-3.4.4-.9-3.3-3-1.7L3.3 13 2.1 9.8l3-1.7.9-3.3 3.4.4z"/><path fill="#fff" d="M10.3 15.6 7 12.3l1.4-1.4 1.9 1.9 5.3-5.3L17 8.9z"/></svg>';
+window.roleBadge=n=>{const r=roleOf(n);if(!r)return'';const c=RC[r];return VB+`<span style="font:700 10px 'Source Sans Pro',sans-serif;background:${c.b};color:${c.c};padding:1px 5px;border-radius:3px;margin-left:4px;letter-spacing:.5px">${c.t}</span>`};
+// player list + chat
+const _rows=rows;rows=function(){_rows.apply(this,arguments);document.querySelectorAll('#prows .row').forEach(r=>{const s=r.querySelector('span');if(!s||s.querySelector('svg'))return;const n=s.textContent.trim();if(roleOf(n))s.insertAdjacentHTML('beforeend',roleBadge(n))})};
+const _say=say;say=function(who,msg,cls){_say(who,msg,cls);if(who&&roleOf(who)){const b=$('log').lastChild&&$('log').lastChild.querySelector('b');b&&b.insertAdjacentHTML('afterend',roleBadge(who)+' ')}};
+// name boards above heads (everyone with a role, you included)
+const _dc=drawChar;drawChar=function(e){const r=_dc.apply(this,arguments);try{const rl=roleOf(e===P?P.name:e.name);if(rl&&!e.dead){const v=toCam(e.x,e.y+(e===P?3.55:3.95),e.z);if(v[2]>.5&&v[2]<80){const p=proj(v);Q.push({d:v[2]-.6,rtag:rl,nm:e===P?P.name:e.name,x:p[0],y:p[1]})}}}catch(x){}return r};
+const _fq=flushQ;flushQ=function(){const tags=[];for(let i=Q.length-1;i>=0;i--)if(Q[i].rtag){tags.push(Q[i]);Q.splice(i,1)}_fq.apply(this,arguments);const cx=GLON&&window.ui2d?ui2d:g;for(const q of tags){const c=RC[q.rtag];cx.save();cx.font='800 12px "Source Sans Pro",sans-serif';cx.textAlign='center';const w=cx.measureText(c.t).width+30,x0=q.x-w/2,y0=q.y-16;cx.fillStyle='rgba(0,0,0,.35)';cx.fillRect(x0+2,y0+2,w,18);cx.fillStyle=c.b;cx.fillRect(x0,y0,w,18);cx.strokeStyle='rgba(255,255,255,.7)';cx.lineWidth=1;cx.strokeRect(x0+.5,y0+.5,w-1,17);
+ cx.fillStyle='#00a2ff';cx.beginPath();cx.arc(x0+10,y0+9,6,0,7);cx.fill();cx.strokeStyle='#fff';cx.lineWidth=1.8;cx.beginPath();cx.moveTo(x0+7,y0+9);cx.lineTo(x0+9.3,y0+11.3);cx.lineTo(x0+13.2,y0+6.8);cx.stroke();cx.fillStyle=c.c;cx.fillText(c.t,q.x+7,y0+13.5);cx.restore()}};
+// role hats: only the matching role may wear them
+const _ho=hatOf;hatOf=function(e){const k=(e===P||e.me)?AV.hat:e.remote?e.ht:null;if(k&&HATROLE[k]){const n=(e===P||e.me)?P.name:e.name;const rl=roleOf(n);if(rl!==HATROLE[k]&&!(rl==='owner'))return null}return _ho(e)};
+// avatar editor: lock role hats
+const _ui=avUI;avUI=function(){_ui.apply(this,arguments);document.querySelectorAll('#avhats .avb').forEach(b=>{const k=b.dataset.k,need=HATROLE[k];if(!need)return;const rl=roleOf(P.name);const ok=rl===need||rl==='owner';const nm=b.querySelector('.nm');if(nm&&!nm.dataset.r){nm.dataset.r=1;nm.insertAdjacentHTML('beforeend',`<br><small style="color:${RC[need].b};font-weight:700">${RC[need].t} ONLY</small>`)}if(!ok){b.style.opacity=.45;b.onclick=()=>toast(RC[need].t+' only')}})};
+// ---- settings panel: your code, owner key, grant roles ----
+const box=document.createElement('div');box.id='rolebox';box.style.cssText='margin-top:18px;padding:14px;background:rgba(0,0,0,.05);border-radius:6px;max-width:520px';
+box.innerHTML=`<h3 style="margin:0 0 8px">Player Code &amp; Roles</h3><div>Your player code: <b id="myCode" style="font-family:monospace;font-size:17px;user-select:text">…</b> <span class="mb" id="cpCode" style="cursor:pointer;margin-left:6px">Copy</span></div><div style="font-size:13px;opacity:.7;margin:4px 0 8px">Send this code to the owner if you should be an Admin or Coder.</div><div>Your role: <b id="myRole">Player</b></div>
+<div id="ownerKeyRow" style="margin-top:10px"><input id="okIn" placeholder="Owner key" style="padding:6px;width:220px"> <span class="mb" id="okGo" style="cursor:pointer">Claim owner</span></div>
+<div id="grantBox" style="display:none;margin-top:12px;border-top:1px solid rgba(0,0,0,.15);padding-top:10px"><b>Owner panel</b><div style="margin:6px 0"><input id="grCode" placeholder="Player code (BH-XXXXXX)" style="padding:6px;width:200px;text-transform:uppercase"> <select id="grRole" style="padding:6px"><option value="admin">Admin</option><option value="coder">Coder</option><option value="">Remove role</option></select> <span class="mb" id="grGo" style="cursor:pointer">Give</span></div><div id="grMsg" style="font-size:13px;min-height:1em"></div><div id="grList" style="font-size:14px;margin-top:6px"></div></div>`;
+$('setpage').appendChild(box);
+['okIn','grCode'].forEach(id=>{$(id).onkeydown=e=>e.stopPropagation();$(id).onkeyup=e=>e.stopPropagation()});
+$('cpCode').onclick=()=>{try{navigator.clipboard.writeText($('myCode').textContent);toast('Code copied')}catch(e){}};
+$('okGo').onclick=async()=>{const k=$('okIn').value.trim().toUpperCase();if(await sha('bhrole:'+k)!==OKH){toast('Wrong owner key');return}const ok=await setRole(P.name,'owner');if(!AV.hat)AV.hat='obchh';try{localStorage.setItem('avatar',JSON.stringify(AV))}catch(e){}$('okIn').value='';toast(ok?'You are the Owner':'You are the Owner (saved on this device; online save failed)');refresh()};
+$('grGo').onclick=async()=>{if(roleOf(P.name)!=='owner')return;const code=$('grCode').value.trim();$('grMsg').textContent='Looking up…';const n=await nameFromCode(code);if(!n){$('grMsg').textContent='No player found with that code. They must log in once first.';return}const r=$('grRole').value;const ok=await setRole(n,r||null);$('grMsg').textContent=(r?`${n} is now ${RC[r].t}`:`Removed ${n}'s role`)+(ok?'':' (saved on this device only — online save failed)');$('grCode').value=''};
+async function refresh(){if(!P.name)return;const rl=roleOf(P.name);if($('myRole'))$('myRole').innerHTML=rl?RC[rl].t+roleBadge(P.name):'Player';$('grantBox').style.display=rl==='owner'?'':'none';$('ownerKeyRow').style.display=rl==='owner'?'none':'';
+ $('grList').innerHTML=Object.entries(ROLES).map(([n,r])=>`<div>${esc(n)} ${roleBadge(n)}</div>`).join('')||'<i>No roles given yet</i>';const hn=$('hubName');if(hn&&!hn.querySelector('svg')&&rl)hn.insertAdjacentHTML('beforeend',roleBadge(P.name));
+ if(rl&&RC[rl]&&!AV.hat){AV.hat=RC[rl].hat}}
+const _set=$('navSet').onclick;$('navSet').onclick=async function(){_set&&_set.apply(this,arguments);$('myCode').textContent=await codeOf(P.name);refresh()};
+const _ea=enterAs;enterAs=function(n){_ea(n);publishCode();setTimeout(refresh,50)};
+if(P.name)publishCode();setTimeout(refresh,300);
+})();
+
 </script></body></html>
