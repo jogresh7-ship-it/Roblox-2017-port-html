@@ -2,7 +2,7 @@
 <style>*{margin:0;box-sizing:border-box;user-select:none;-webkit-user-select:none;touch-action:none}
 body{overflow:hidden;background:#000;font-family:system-ui,sans-serif}canvas{display:block}
 #stick{position:fixed;left:40px;bottom:40px;width:170px;height:170px}#ring{width:100%;height:100%;opacity:.85}
-#knob{position:absolute;width:86px;left:42px;top:42px;transition:transform .12s}#stick.on #knob{transition:none}
+#knob{position:absolute;width:86px;left:42px;top:42px}#stick.on #knob{transition:none}
 #jump{position:fixed;right:40px;bottom:50px;width:120px}
 #hud{position:fixed;top:12px;left:50%;transform:translateX(-50%);background:#0008;color:#fff;padding:8px 16px;border-radius:10px;font-size:13px;text-align:center;pointer-events:none}
 #coins{position:fixed;top:12px;right:16px;background:#0008;color:#ffd54a;padding:8px 14px;border-radius:10px;font-weight:700}
@@ -252,6 +252,25 @@ html,body{overscroll-behavior:none;-webkit-touch-callout:none}
 }
 </style>
 <script>addEventListener('load',()=>{if(matchMedia('(pointer:coarse)').matches){const b=document.getElementById('bChat');if(b){b.addEventListener('click',()=>{},{once:true});const c=document.getElementById('chat');if(c)c.style.display='none';b.classList.remove('on')}}})</script>
+<style id="safe2">
+@media (pointer:coarse){
+ :root{--sl:max(env(safe-area-inset-left),14px);--sr:max(env(safe-area-inset-right),14px);--st:max(env(safe-area-inset-top),10px);--sb:max(env(safe-area-inset-bottom),14px)}
+ @media (orientation:landscape){:root{--sl:max(calc(env(safe-area-inset-left) + 10px),34px);--sr:max(calc(env(safe-area-inset-right) + 10px),34px);--sb:max(env(safe-area-inset-bottom),20px)}}
+ #top{top:var(--st)!important;left:var(--sl)!important;padding-top:0!important;height:52px!important}
+ #top>*{min-width:48px;min-height:48px;display:flex;align-items:center;justify-content:center}
+ #plist{top:var(--st)!important;right:var(--sr)!important}
+ #chat{top:calc(var(--st) + 62px)!important;left:var(--sl)!important}
+ #stick{left:calc(var(--sl) + 6px)!important;bottom:calc(var(--sb) + 10px)!important}
+ #jump{right:calc(var(--sr) + 6px)!important;bottom:calc(var(--sb) + 20px)!important}
+ #bar{bottom:var(--sb)!important}
+ .nav{padding-left:var(--sl)!important;padding-right:var(--sr)!important;padding-top:env(safe-area-inset-top);height:auto!important;min-height:50px;box-sizing:border-box}
+ #hub>*:not(.nav){padding-left:var(--sl);padding-right:var(--sr);box-sizing:border-box}
+ #dclose{min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center}
+ #menu{padding:var(--st) var(--sr) var(--sb) var(--sl);box-sizing:border-box}
+ #btns{bottom:calc(var(--sb) + 8px)!important}
+ button,.mb{touch-action:manipulation}
+}
+</style>
 <link rel="manifest" href="manifest.webmanifest">
 </head><body><canvas id="c"></canvas>
 <div id="top" class="ui">
@@ -540,8 +559,8 @@ function renderAv(){if(!avOpen)return;const box=$('avview'),w=box.clientWidth,hh
  const sv=[g,W,H,F,C,cy,sy,cp,sp,Q];g=pctx;W=w;H=hh;F=Math.min(w,hh)*1.5;
  const yaw=avYaw;C={x:Math.sin(yaw)*-7.5,y:1.9,z:Math.cos(yaw)*-7.5};cy=Math.cos(yaw);sy=Math.sin(yaw);cp=1;sp=0;
  g.clearRect(0,0,W,H);Q=[];const fake={me:1,x:0,y:0,z:0,face:0,walk:0,ground:1,swing:0,dance:null};
- drawNoob(fake,0,0,-.25,0,{armR:Math.sin(T*2)*.15,armL:-Math.sin(T*2)*.15},AV);flushQ();
- [g,W,H,F,C,cy,sy,cp,sp,Q]=sv;avYaw+=.006}
+ drawNoob(fake,0,0,-.25,0,{},AV);flushQ();
+ [g,W,H,F,C,cy,sy,cp,sp,Q]=sv;}
 (function avLoop(){renderAv();requestAnimationFrame(avLoop)})();
 
 // ===== combat =====
@@ -642,7 +661,7 @@ function stepBombs(dt){for(const b of tbombs){b.t-=dt;b.vy-=30*dt;b.x+=b.vx*dt;b
   b.tk-=dt;if(b.tk<=0){b.tk=Math.max(.12,b.t/6);playAt('tick',b,.7)}if(b.t<=0||b.y<-60){b.dead=1;if(b.y>-60)boom(b.x,b.y+.5,b.z,b.own,9)}}tbombs=tbombs.filter(b=>!b.dead)}
 // ===== death crumble + spawn forcefield =====
 const LC={};for(const k in NOOB.g){let a=[1e9,1e9,1e9],b=[-1e9,-1e9,-1e9];for(const t of NOOB.g[k])for(let i=0;i<3;i++)for(let d=0;d<3;d++){a[d]=Math.min(a[d],t[i*3+d]);b[d]=Math.max(b[d],t[i*3+d])}LC[k]={c:a.map((v,d)=>(v+b[d])/2),hh:(b[1]-a[1])/2,hd:(b[2]-a[2])/2}}
-function crumble(e){const LC=bodyOf(e).lc;const cs=Math.cos(e.face),sn=Math.sin(e.face),mode=Math.random()*4|0,da=Math.random()*6.283,dx=Math.sin(da),dz=Math.cos(da),spin=(Math.random()<.5?-1:1)*(4+Math.random()*3);devlog('info','Death animation #'+(mode+1));e.debris=Object.keys(LC).map(k=>{const c=LC[k].c,wx=e.x+c[0]*cs+c[2]*sn,wz=e.z-c[0]*sn+c[2]*cs,ox=c[0]*cs,oz=-c[0]*sn;
+function crumble(e){const LC=bodyOf(e).lc;const cs=Math.cos(e.face),sn=Math.sin(e.face),mode=0,da=Math.random()*6.283,dx=Math.sin(da),dz=Math.cos(da),spin=(Math.random()<.5?-1:1)*(4+Math.random()*3);e.debris=Object.keys(LC).map(k=>{const c=LC[k].c,wx=e.x+c[0]*cs+c[2]*sn,wz=e.z-c[0]*sn+c[2]*cs,ox=c[0]*cs,oz=-c[0]*sn;
  const R_=()=>Math.random()-.5,kx=(e.kx||0)*.3,kz=(e.kz||0)*.3;let v;
  if(mode===0)v={vx:ox*5+R_()*4,vy:4+Math.random()*4,vz:oz*5+R_()*4,wx:R_()*12,wz:R_()*12};
  else if(mode===1)v={vx:R_()*1.2+ox*.6,vy:Math.random()*1.2,vz:R_()*1.2+oz*.6,wx:R_()*3,wz:R_()*3};
@@ -742,7 +761,7 @@ function bubble(name,text){const e=name===P.name?P:rents().find(r=>r.name===name
 function say(who,msg,cls){if(who)bubble(who,msg);if(who&&who!==P.name)play('ping',.4);const d=document.createElement('div');if(cls)d.className=cls;d.innerHTML=who?`<b style="color:${who===P.name?'#7dd3ff':'#ffb26b'}">[${who}]:</b> `:'';d.append(msg);$('log').append(d);while($('log').children.length>12)$('log').firstChild.remove()}
 say(null,'Please chat \'/?\' or \'/help\' for a list of chat commands.','sys');
 setInterval(()=>{return;const L=MODE==='sword'?[['Telamon','1v1 me on red island'],['noob_slayer99','gg'],['builderman_bot','who keeps rocketing me lol'],['Shedletsky_fan','lunge spam is op']]:[['NoobMaster','hi everyone'],['xX_Gamer_Xx','who wants to race to the top'],['Builderman_Fan','got 5 stars already']];const p=L[Math.random()*L.length|0];say(p[0],p[1])},6000);
-const cin=$('cin');cin.onkeydown=e=>{e.stopPropagation();if(e.key==='Enter'){const v=cin.value.trim();if(v){if(v==='/help'||v==='/?')say(null,'Commands: /help, /reset, /e dance, /e wave, /e drink, /e cast, /e swing, /e hit, /e jumpslash, /tools, /ko (Shift = Shift Lock)','sys');else if(v==='/reset')resetChar();else if(['/e drink','/e cast','/e swing','/e hit','/e jumpslash'].includes(v)){playAct(P,{'/e drink':'drink','/e cast':'wandcast','/e swing':'staffswing','/e hit':'hit2','/e jumpslash':'swingjump'}[v]);say(null,'You '+v.slice(3)+'!','sys')}else if(v.startsWith('/e ')){P.dance=v.slice(3);say(null,'You '+v.slice(3)+'!','sys')}else if(v==='/tools')say(null,'Tools: '+tools.join(', '),'sys');else if(v==='/ko')say(null,`KOs: ${P.ko}  WOs: ${P.wo}`,'sys');else{say(P.name,v);myChat={m:v.slice(0,120),q:Date.now()}}}cin.value='';cin.blur()}if(e.key==='Escape')cin.blur()};
+const cin=$('cin');cin.onkeydown=e=>{e.stopPropagation();if(e.key==='Enter'){const v=cin.value.trim();if(v){if(v==='/help'||v==='/?')say(null,'Commands: /help, /reset, /e dance, /tools, /ko (Shift = Shift Lock)','sys');else if(v==='/reset')resetChar();else if(false){playAct(P,{'/e drink':'drink','/e cast':'wandcast','/e swing':'staffswing','/e hit':'hit2','/e jumpslash':'swingjump'}[v]);say(null,'You '+v.slice(3)+'!','sys')}else if(v.startsWith('/e ')){P.dance=v.slice(3);say(null,'You '+v.slice(3)+'!','sys')}else if(v==='/tools')say(null,'Tools: '+tools.join(', '),'sys');else if(v==='/ko')say(null,`KOs: ${P.ko}  WOs: ${P.wo}`,'sys');else{say(P.name,v);myChat={m:v.slice(0,120),q:Date.now()}}}cin.value='';cin.blur()}if(e.key==='Escape')cin.blur()};
 cin.onkeyup=e=>e.stopPropagation();cin.onpointerdown=e=>e.stopPropagation();
 const TH={
  2008:{},
