@@ -1394,7 +1394,7 @@ function drawChar(e){if(e.dead)return;if(e.dance&&(inp.x||inp.y||Object.values(K
 let ROOMK='obby',NETR=null,myPeer=null;const remote=new Map();let myHits=[],hitSeq=0,myChat=null,myKill=null,killSeq=0,myFx=[],fxSeq=0,netT=0;
 function rents(){return [...remote.values()].filter(e=>!e.gone)}
 function soloBots(){return remote.size===0}
-async function netJoin(){const sid=('bh-'+ROOMK).toLowerCase().replace(/[^a-z0-9_.-]/g,'').slice(0,48);
+async function netJoin(){const sid=('bh-'+ROOMK+(window.SRVN>1?'-s'+SRVN:'')).toLowerCase().replace(/[^a-z0-9_.-]/g,'').slice(0,48);
  const onPeers=ch=>{for(const p of ch.peers){if(p.sameTab){myPeer=p.peer;continue}if(p.kind!=='viewer')continue;netPeer(p)}for(const p of ch.left){const e=remote.get(p.peer);if(e){say(null,`${e.name} left the game`,'sys');(remote.get(p.peer)&&remote.get(p.peer).foot&&remote.get(p.peer).foot.pause(),remote.delete(p.peer));rows()}}};
  let room=null;try{if(window.claude&&claude.use)room=await claude.use('room')}catch(e){}
  if(room){try{NETR=await room.join(sid)}catch(e){devlog('warn','Named server unavailable ('+(e.code||e.message)+'), using shared lobby');NETR=room}
@@ -2158,8 +2158,8 @@ const _ho=hatOf;hatOf=function(e){const k=(e===P||e.me)?AV.hat:e.remote?e.ht:nul
 // avatar editor: lock role hats
 const _ui=avUI;avUI=function(){_ui.apply(this,arguments);document.querySelectorAll('#avhats .avb').forEach(b=>{const k=b.dataset.k,need=HATROLE[k];if(!need)return;const rl=roleOf(P.name);const ok=rl===need||rl==='owner';const nm=b.querySelector('.nm');if(nm&&!nm.dataset.r){nm.dataset.r=1;nm.insertAdjacentHTML('beforeend',`<br><small style="color:${RC[need].b};font-weight:700">${RC[need].t} ONLY</small>`)}if(!ok){b.style.opacity=.45;b.onclick=()=>toast(RC[need].t+' only')}})};
 // ---- settings panel: your code, owner key, grant roles ----
-const box=document.createElement('div');box.id='rolebox';box.style.cssText='margin-top:18px;padding:14px;background:rgba(0,0,0,.05);border-radius:6px;max-width:520px';
-box.innerHTML=`<h3 style="margin:0 0 8px">Player Code &amp; Roles</h3><div>Your player code: <b id="myCode" style="font-family:monospace;font-size:17px;user-select:text">…</b> <span class="mb" id="cpCode" style="cursor:pointer;margin-left:6px">Copy</span></div><div style="font-size:13px;opacity:.7;margin:4px 0 8px">Send this code to the owner if you should be an Admin or Coder.</div><div>Your role: <b id="myRole">Player</b></div>
+const box=document.createElement('div');box.id='rolebox';box.className='sgrp';
+box.innerHTML=`<b style="display:block;margin-bottom:8px">Player Code &amp; Roles</b><div>Your player code: <b id="myCode" style="font-family:monospace;font-size:17px;user-select:text">…</b> <span class="mb" id="cpCode" style="cursor:pointer;margin-left:6px">Copy</span></div><div style="font-size:13px;opacity:.7;margin:4px 0 8px">Send this code to the owner if you should be an Admin or Coder.</div><div>Your role: <b id="myRole">Player</b></div>
 <div id="ownerKeyRow" style="margin-top:10px"><input id="okIn" placeholder="Owner key" style="padding:6px;width:220px"> <span class="mb" id="okGo" style="cursor:pointer">Claim owner</span></div>
 <div id="grantBox" style="display:none;margin-top:12px;border-top:1px solid rgba(0,0,0,.15);padding-top:10px"><b>Owner panel</b><div style="margin:6px 0"><input id="grCode" placeholder="Player code (BH-XXXXXX)" style="padding:6px;width:200px;text-transform:uppercase"> <select id="grRole" style="padding:6px"><option value="admin">Admin</option><option value="coder">Coder</option><option value="">Remove role</option></select> <span class="mb" id="grGo" style="cursor:pointer">Give</span></div><div id="grMsg" style="font-size:13px;min-height:1em"></div><div id="grList" style="font-size:14px;margin-top:6px"></div></div>`;
 $('setpage').appendChild(box);
@@ -2173,6 +2173,83 @@ async function refresh(){if(!P.name)return;if(!OWNN.has(P.name.toLowerCase())&&O
 const _set=$('navSet').onclick;$('navSet').onclick=async function(){_set&&_set.apply(this,arguments);$('myCode').textContent=await codeOf(P.name);refresh()};
 const _ea=enterAs;enterAs=function(n){_ea(n);publishCode();setTimeout(refresh,50)};
 if(P.name)publishCode();setTimeout(refresh,300);
+})();
+
+
+// ===== real servers + friends (2017 style) =====
+(function(){
+const MAXP=8;window.SRVN=0;let wantSrv=null;
+const PRES=new Map();// mqtt id -> {n,g,gn,s,t}
+const online=()=>{const now=Date.now(),o=[];for(const [id,v] of PRES)if(now-v.t<9000)o.push(Object.assign({id},v));return o};
+window.onlineNow=online;
+function hook(){if(!MQ||MQ._fr)return;MQ._fr=1;MQ.on('message',(tp,pl)=>{if(!tp.startsWith('brickhub/v1/lobby/'))return;const id=tp.slice(18);try{const s=JSON.parse(pl.toString());if(s.n)PRES.set(id,{n:String(s.n).slice(0,20),g:s.g||null,gn:String(s.gn||'').slice(0,60),s:s.s|0,t:Date.now()})}catch(e){}});
+ setInterval(pub,3000);pub()}
+function pub(){if(!MQ||!P.name)return;MQ.publish('brickhub/v1/lobby/'+MQID,JSON.stringify({g:GAMEON?ROOMK:null,n:P.name,gn:GAMEON&&GAMES.custom?GAMES.custom.t:'',s:GAMEON?SRVN:0}))}
+setInterval(()=>{if(!MQ&&!(window.claude&&claude.use))mqttConnect().then(hook).catch(()=>{});else hook()},2000);
+// pick a server before joining
+const _nj=netJoin;netJoin=async function(){const gk=ROOMK;if(wantSrv!==null){SRVN=wantSrv;wantSrv=null}else{const cnt={};for(const v of online())if(v.g===gk&&v.n!==P.name)cnt[v.s]=(cnt[v.s]||0)+1;let best=-1,bn=-1;for(const s in cnt)if(cnt[s]<MAXP&&cnt[s]>bn){bn=cnt[s];best=+s}SRVN=best>=0?best:(Object.keys(cnt).length?Math.max(...Object.keys(cnt).map(Number))+1:1)}return _nj.apply(this,arguments)};
+// ---- servers tab ----
+const srvPane=$('dp_srv');
+function srvList(){if(!srvPane)return;const gk=CUSTOM?'c-'+crSlug(CUSTOM.name||'Untitled'):null;const by={};for(const v of online())if(v.g===gk)(by[v.s]=by[v.s]||[]).push(v);const keys=Object.keys(by).sort((a,b)=>by[b].length-by[a].length);
+ const fr=myFriends();let h=`<div class="srvhd"><b>Servers</b><span class="fbtn pri" id="srvNew">Create New Server</span></div>`;
+ if(!MQ)h+=`<div class="dcard"><p>Connecting to the server list…</p></div>`;else if(!keys.length)h+=`<div class="dcard"><p>No one is playing right now. Press Play to start a server.</p></div>`;
+ for(const s of keys){const L=by[s],fl=L.filter(v=>fr.includes(v.n.toLowerCase()));h+=`<div class="srv"><div class="sl"><div class="sn">Server ${s}</div><div class="sc">${L.length} of ${MAXP} players</div>${fl.length?`<div class="sf">Friends: ${fl.map(v=>esc(v.n)).join(', ')}</div>`:''}<span class="fbtn ${L.length>=MAXP?'':'grn'}" data-s="${s}">${L.length>=MAXP?'Full':'Join'}</span></div><div class="sp">${L.map(v=>`<div class="pp" title="${esc(v.n)}"><div class="hs">${esc(v.n[0]||'?').toUpperCase()}</div><span>${esc(v.n)}${typeof roleBadge==='function'?roleBadge(v.n):''}</span></div>`).join('')}</div></div>`}
+ srvPane.innerHTML=h;srvPane.querySelectorAll('.srv .fbtn[data-s]').forEach(b=>b.onclick=()=>{if(b.textContent==='Full'){toast('This server is full');return}wantSrv=+b.dataset.s;$('playBtn').click()});
+ const nb=$('srvNew');if(nb)nb.onclick=()=>{const used=keys.map(Number);wantSrv=(used.length?Math.max(...used):0)+1;$('playBtn').click()}}
+setInterval(()=>{if(srvPane&&srvPane.style.display!=='none'&&$('det').classList.contains('open'))srvList()},2000);
+document.querySelectorAll('.dtabs span').forEach(t=>t.addEventListener('click',()=>{if(t.dataset.t==='srv')srvList()}));
+const _sl=serverList;serverList=function(){_sl();const el=$('pcount');if(!el||!CUSTOM)return;const gk='c-'+crSlug(CUSTOM.name||'Untitled');const L=online().filter(v=>v.g===gk);if(MQ)el.textContent=L.length?L.length+' playing now':'No one is playing right now';const fr=myFriends(),f=L.filter(v=>fr.includes(v.n.toLowerCase()));if(f.length)el.textContent+=` · ${f.map(v=>v.n).join(', ')} ${f.length>1?'are':'is'} here`};
+setInterval(()=>{if($('det').classList.contains('open'))serverList()},3000);
+// ---- friends data (Firebase + this device) ----
+let FR={friends:[],incoming:[],outgoing:[]};const FK=()=>'bh_friends_'+(P.name||'').toLowerCase();
+const loadL=()=>{try{FR=Object.assign({friends:[],incoming:[],outgoing:[]},JSON.parse(localStorage.getItem(FK())||'{}'))}catch(e){}},saveL=()=>{try{localStorage.setItem(FK(),JSON.stringify(FR))}catch(e){}};
+window.myFriends=()=>FR.friends;
+let FS=null;const fsv='10.8.0',FU=m=>`https://www.gstatic.com/firebasejs/${fsv}/firebase-${m}.js`;
+async function fs(){if(FS)return FS;const [A,F]=await Promise.all([import(FU('app')),import(FU('firestore'))]);let app;try{app=A.getApp()}catch(e){app=A.initializeApp({apiKey:"AIzaSyDZAjauAbq0tsLh1EZtaUp8-O9wbZmX4A8",authDomain:"erablox0.firebaseapp.com",projectId:"erablox0",storageBucket:"erablox0.firebasestorage.app",messagingSenderId:"747146722972",appId:"1:747146722972:web:2643f95690cb76c3bfb759"})}return FS={db:F.getFirestore(app),F}}
+let unsub=null;
+async function watch(){loadL();draw();if(unsub){unsub();unsub=null}try{const f=await fs();unsub=f.F.onSnapshot(f.F.doc(f.db,'bh_friends',P.name.toLowerCase()),d=>{if(d.exists()){const v=d.data();FR={friends:v.friends||[],incoming:v.incoming||[],outgoing:v.outgoing||[]};saveL();draw()}})}catch(e){}}
+async function upd(name,fn){const k=name.toLowerCase();try{const f=await fs();const ref=f.F.doc(f.db,'bh_friends',k);const d=await f.F.getDoc(ref);const v=Object.assign({friends:[],incoming:[],outgoing:[]},d.exists()?d.data():{});fn(v);await f.F.setDoc(ref,v);return true}catch(e){return false}}
+const uniq=a=>[...new Set(a)];
+async function request(name){name=name.trim();const me=P.name.toLowerCase(),k=name.toLowerCase();if(!/^[A-Za-z0-9_]{3,20}$/.test(name))return 'Enter a valid username';if(k===me)return "You can't friend yourself";if(FR.friends.includes(k))return 'You are already friends';
+ if(FR.incoming.includes(k))return accept(k);FR.outgoing=uniq([...FR.outgoing,k]);saveL();draw();const a=await upd(me,v=>{v.outgoing=uniq([...v.outgoing,k])}),b=await upd(k,v=>{v.incoming=uniq([...v.incoming,me])});return a&&b?'Friend request sent to '+name:'Saved on this device only (could not reach the friends server)'}
+async function accept(k){const me=P.name.toLowerCase();FR.incoming=FR.incoming.filter(x=>x!==k);FR.friends=uniq([...FR.friends,k]);saveL();draw();await upd(me,v=>{v.incoming=v.incoming.filter(x=>x!==k);v.friends=uniq([...v.friends,k])});await upd(k,v=>{v.outgoing=v.outgoing.filter(x=>x!==me);v.friends=uniq([...v.friends,me])});play('b');return 'You are now friends with '+k}
+async function decline(k){const me=P.name.toLowerCase();FR.incoming=FR.incoming.filter(x=>x!==k);saveL();draw();await upd(me,v=>{v.incoming=v.incoming.filter(x=>x!==k)});await upd(k,v=>{v.outgoing=v.outgoing.filter(x=>x!==me)})}
+async function unfriend(k){const me=P.name.toLowerCase();FR.friends=FR.friends.filter(x=>x!==k);saveL();draw();await upd(me,v=>{v.friends=v.friends.filter(x=>x!==k)});await upd(k,v=>{v.friends=v.friends.filter(x=>x!==me)})}
+// ---- friends page ----
+const page=document.createElement('div');page.id='frpage';page.style.display='none';
+page.innerHTML=`<h2>Friends</h2><div class="frtabs"><span class="on" data-t="f">Friends <i id="frc">0</i></span><span data-t="r">Requests <i id="frr">0</i></span><span data-t="a">Add Friend</span></div><div id="frbody"></div>`;
+const host=$('setpage').parentNode;host.appendChild(page);
+let ftab='f';page.querySelectorAll('.frtabs span').forEach(s=>s.onclick=()=>{ftab=s.dataset.t;page.querySelectorAll('.frtabs span').forEach(x=>x.classList.toggle('on',x===s));draw();play('b')});
+const where=k=>{const o=online().filter(v=>v.n.toLowerCase()===k).sort((a,b)=>b.t-a.t)[0];return o||null};
+function draw(){if(!$('frc'))return;$('frc').textContent=FR.friends.length;$('frr').textContent=FR.incoming.length;$('frr').style.display=FR.incoming.length?'':'none';const b=$('frbody');if(!b||page.style.display==='none')return;
+ if(ftab==='f'){b.innerHTML=FR.friends.length?`<div class="frgrid">${FR.friends.map(k=>{const w=where(k);const st=!w?'<span class="off">Offline</span>':w.g?`<span class="ing">In game: ${esc(w.gn||'a game')}</span>`:'<span class="onl">Online</span>';return `<div class="frc"><div class="frav ${w?(w.g?'g':'o'):''}">${esc(k[0].toUpperCase())}</div><div class="frn">${esc(k)}${typeof roleBadge==='function'?roleBadge(k):''}</div>${st}<div class="frb">${w&&w.g?`<span class="fbtn grn" data-j="${esc(k)}">Join Game</span>`:''}<span class="fbtn" data-u="${esc(k)}">Unfriend</span></div></div>`}).join('')}</div>`:'<div class="dcard"><p>You have no friends yet. Use <b>Add Friend</b> to send a request.</p></div>'}
+ else if(ftab==='r'){b.innerHTML=FR.incoming.length?FR.incoming.map(k=>`<div class="frrow"><div class="frav">${esc(k[0].toUpperCase())}</div><b>${esc(k)}</b><span class="sp"></span><span class="fbtn grn" data-a="${esc(k)}">Accept</span><span class="fbtn" data-d="${esc(k)}">Ignore</span></div>`).join(''):'<div class="dcard"><p>No friend requests.</p></div>'+(FR.outgoing.length?`<p style="opacity:.7">Sent: ${FR.outgoing.map(esc).join(', ')}</p>`:'')}
+ else{b.innerHTML=`<div class="dcard"><p>Type a username to send a friend request.</p><input id="frIn" maxlength="20" placeholder="Username"> <span class="fbtn grn" id="frGo">Send Request</span><p id="frMsg"></p></div><h3>People online now</h3><div class="frgrid">${online().filter(v=>v.n!==P.name).map(v=>`<div class="frc"><div class="frav ${v.g?'g':'o'}">${esc(v.n[0].toUpperCase())}</div><div class="frn">${esc(v.n)}${typeof roleBadge==='function'?roleBadge(v.n):''}</div>${v.g?`<span class="ing">In game: ${esc(v.gn||'')}</span>`:'<span class="onl">Online</span>'}<div class="frb"><span class="fbtn" data-q="${esc(v.n)}">Add Friend</span></div></div>`).join('')||'<p style="opacity:.7">No one else is online right now.</p>'}</div>`;
+  const i=$('frIn');i.onkeydown=e=>{e.stopPropagation();if(e.key==='Enter')$('frGo').click()};i.onkeyup=e=>e.stopPropagation();$('frGo').onclick=async()=>{$('frMsg').textContent=await request(i.value);i.value=''}}
+ b.querySelectorAll('[data-j]').forEach(x=>x.onclick=()=>joinFriend(x.dataset.j));b.querySelectorAll('[data-u]').forEach(x=>x.onclick=()=>unfriend(x.dataset.u));b.querySelectorAll('[data-a]').forEach(x=>x.onclick=()=>accept(x.dataset.a));b.querySelectorAll('[data-d]').forEach(x=>x.onclick=()=>decline(x.dataset.d));b.querySelectorAll('[data-q]').forEach(x=>x.onclick=async()=>{toast(await request(x.dataset.q))})}
+setInterval(()=>{if(page.style.display!=='none'&&ftab!=='a')draw()},3000);
+window.joinFriend=function(k){const w=where(k);if(!w||!w.g){toast(k+' is not in a game');return}const g=BUILTIN.find(x=>'c-'+crSlug(x.name||'Untitled')===w.g);if(!g){toast("Can't find that game");return}if(GAMEON){toast('Leave your game first');return}openGame(g);wantSrv=w.s;setTimeout(()=>$('playBtn').click(),200)};
+function showFriends(){['hbody','avpage','setpage','crpage'].forEach(id=>{const e=id==='hbody'?document.querySelector('#hub .hbody'):$(id);if(e)e.style.display='none'});avOpen=false;['navGames','navAv','navSet','navCr'].forEach(n=>$(n).classList.remove('on'));const sp=getComputedStyle($('setpage'));page.style.marginLeft=sp.marginLeft;page.style.paddingBottom=sp.paddingBottom;page.style.display='block';draw();document.querySelectorAll('#hub .sitem').forEach(x=>x.classList.toggle('on',x.dataset.go==='friends'))}
+const _ht=hubTab;hubTab=function(t){page.style.display='none';return _ht.apply(this,arguments)};
+document.querySelectorAll('#hub .sitem[data-go="friends"]').forEach(it=>it.onclick=e=>{e.stopImmediatePropagation();showFriends();play('b')});
+document.querySelectorAll('#hub .nav span').forEach(s=>{if(s.textContent.trim()==='Friends'){s.style.cursor='pointer';s.onclick=()=>{showFriends();play('b')}}});
+// friend came online / joined a game
+const seen=new Map();setInterval(()=>{for(const k of FR.friends){const w=where(k),st=w?(w.g||'on'):null,pr=seen.get(k);if(pr!==undefined&&st!==pr&&w){if(w.g&&!GAMEON)notify(`${k} is playing ${w.gn||'a game'}`,k);else if(!pr&&!w.g)notify(`${k} is online`)}seen.set(k,st)}if(FR.incoming.length&&!seen.get('__req'+FR.incoming.length)){seen.set('__req'+FR.incoming.length,1);notify(`New friend request from ${FR.incoming[FR.incoming.length-1]}`)}},3000);
+function notify(t,joinK){const n=document.createElement('div');n.className='frnote';n.innerHTML=`<b>Friends</b><div>${esc(t)}</div>${joinK?`<span class="fbtn grn">Join</span>`:''}`;document.body.appendChild(n);const j=n.querySelector('.fbtn');if(j)j.onclick=()=>{n.remove();joinFriend(joinK)};play('ping',.5);setTimeout(()=>n.remove(),8000)}
+// ---- 2017 look ----
+const css=document.createElement('style');css.textContent=`#frpage{padding:18px 24px;max-width:980px}#frpage h2{font:400 32px "Source Sans Pro",sans-serif;margin:4px 0 12px;color:#191919}
+.frtabs{display:flex;border-bottom:2px solid #e3e3e3;margin-bottom:14px}.frtabs span{padding:10px 18px;cursor:pointer;font:600 16px "Source Sans Pro",sans-serif;color:#757575}.frtabs span.on{color:#191919;box-shadow:inset 0 -3px #00a2ff}.frtabs i{font-style:normal;background:#e3e3e3;border-radius:9px;padding:0 7px;margin-left:6px;font-size:13px}
+.frgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}.frc{background:#fff;border-radius:3px;box-shadow:0 1px 4px rgba(25,25,25,.3);padding:12px;display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center}
+.frav{width:84px;height:84px;border-radius:50%;background:#d5d9dc;display:flex;align-items:center;justify-content:center;font:700 34px "Source Sans Pro",sans-serif;color:#555;border:3px solid transparent}.frav.o{border-color:#00a2ff}.frav.g{border-color:#02b757}.frrow .frav{width:42px;height:42px;font-size:18px}
+.frn{font:600 16px "Source Sans Pro",sans-serif;color:#191919}.frc .off{color:#757575;font-size:13px}.frc .onl{color:#00a2ff;font-size:13px}.frc .ing{color:#02b757;font-size:13px}.frb{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.frrow{display:flex;align-items:center;gap:12px;background:#fff;box-shadow:0 1px 4px rgba(25,25,25,.3);padding:10px 14px;margin-bottom:8px;border-radius:3px}.frrow .sp{flex:1}
+#frpage input{font:16px "Source Sans Pro",sans-serif;padding:7px 9px;border:1px solid #b8b8b8;border-radius:3px;width:220px;user-select:text;touch-action:auto!important}
+.fbtn{display:inline-block;font:600 14px 'Source Sans Pro',sans-serif;padding:5px 12px;border:1px solid #b8b8b8;border-radius:3px;background:#fff;color:#191919;cursor:pointer;user-select:none;white-space:nowrap}.fbtn:hover{background:#f2f2f2}.fbtn.grn{background:#02b757;border-color:#02b757;color:#fff}.fbtn.grn:hover{background:#3fc679}.fbtn.pri{background:#00a2ff;border-color:#00a2ff;color:#fff}
+.frnote{position:fixed;right:16px;bottom:16px;z-index:300;background:#fff;color:#191919;border-radius:3px;box-shadow:0 2px 10px rgba(0,0,0,.35);padding:10px 14px;min-width:230px;font:15px "Source Sans Pro",sans-serif;display:flex;flex-direction:column;gap:6px;border-left:4px solid #00a2ff}
+#dp_srv .srvhd{display:flex;justify-content:space-between;align-items:center;margin:4px 0 10px}#dp_srv .srvhd b{font:400 22px "Source Sans Pro",sans-serif}
+#dp_srv .srv{display:flex;background:#fff;box-shadow:0 1px 4px rgba(25,25,25,.3);border-radius:3px;margin-bottom:10px;padding:10px;gap:14px}#dp_srv .sl{width:170px;display:flex;flex-direction:column;gap:4px}#dp_srv .sn{font-weight:600;font-size:16px}#dp_srv .sc{color:#757575;font-size:13px}#dp_srv .sf{color:#02b757;font-size:13px}
+#dp_srv .sp{display:flex;flex-wrap:wrap;gap:8px;flex:1}#dp_srv .pp{display:flex;flex-direction:column;align-items:center;width:64px;font-size:11px;text-align:center;overflow:hidden}#dp_srv .hs{width:48px;height:48px;border-radius:50%;background:#d5d9dc;display:flex;align-items:center;justify-content:center;font:700 20px "Source Sans Pro",sans-serif;color:#555}`;document.head.appendChild(css);
+const _ea=enterAs;enterAs=function(n){_ea(n);watch()};if(P.name)watch();
 })();
 
 </script></body></html>
