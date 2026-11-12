@@ -1981,7 +1981,7 @@ const _hurt=hurt;hurt=function(e,a,s){const h0=e.hp;_hurt(e,a,s);if(e===P&&P.hp<
 const _die=die;die=function(e,s){const d0=e.dead;_die(e,s);if(e===P&&!d0&&e.dead){sp('impact_bodyfall',.8);sp(pick('uuhhh','Kid saying Ouch'),.6);buzz([80,40,160]);gpRumble(1,400);setTimeout(()=>sp('action_get_up',.6),5000)}};
 let wasG=1,wasSw=0,fallA=null,lastVy=0;
 setInterval(()=>{if(!GAMEON)return;
- if(P.ground&&!wasG&&!P.dead){if(lastVy<-14){sp('action_jump_land',.7);buzz(25)}else sp('collide',.25)}
+ if(P.ground&&!wasG&&!P.dead&&lastVy<-14)buzz(25);
  if(P.swim&&!wasSw){sp(pick('impact_water','Kerplunk'),.6);buzz(30)}
  if(!P.ground&&!P.swim&&P.vy<-22&&!P.dead){if(!fallA&&has('action_falling')){fallA=SND.j_action_falling.cloneNode();fallA.volume=settings.vol/10*.5;fallA.play().catch(()=>{})}}else if(fallA){fallA.pause();fallA=null}
  wasG=P.ground;wasSw=P.swim;lastVy=P.vy},50);
@@ -2294,4 +2294,12 @@ const _pk=crPackage;crPackage=function(){const pk=_pk();const used={};const src=
 const _bc=buildCustom;buildCustom=function(pk){if(pk&&pk.assets)for(const k in pk.assets)if(!AS[k])AS[k]=pk.assets[k];return _bc.apply(this,arguments)};
 })();
 
+
+// ===== reset everything between games =====
+(function(){function clean(){try{if(typeof disEnd==='function')disEnd()}catch(e){}try{shakeA=0}catch(e){}try{$('wx').className=''}catch(e){}
+ try{$('log').innerHTML=''}catch(e){}try{const b=$('banner')||$('ndsmsg');if(b)b.style.display='none'}catch(e){}
+ try{P.vy=0;P.vx=0;P.vz=0;P.wspd=null;P.jpow=null;P.ff=0}catch(e){}try{window.NOCOL=0}catch(e){}
+ document.querySelectorAll('audio').forEach(a=>{try{a.pause()}catch(e){}})}
+ const _bw=buildWorld;buildWorld=function(){clean();return _bw.apply(this,arguments)};
+ let was=false;setInterval(()=>{if(was&&!GAMEON)clean();was=GAMEON},300)})();
 </script></body></html>
