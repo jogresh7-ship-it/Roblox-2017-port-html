@@ -275,6 +275,18 @@ html,body{overscroll-behavior:none;-webkit-touch-callout:none}
 </style>
 <script>document.fonts&&document.fonts.load('16px "Source Sans Pro"')</script>
 <style>#bList:not(.on) img{opacity:.5}</style><style id="realbtn">.mb{border:0!important;border-style:solid!important;border-width:8px!important;border-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADYAAAA2CAYAAACMRWrdAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsEAAA7BAbiRa+0AAABdSURBVGhD7c+hEcAwDMBAt/uzTOTNSrrE5/REWM/unrnQ+/c6jWka0zSmaUzTmKYxTWOaxjSNaRrTNKZpTNOYpjFNY5rGNI1pGtM0pmlM05imMU1jmsY0jWkas8x8pmEDQkYuiEgAAAAASUVORK5CYII=) 8 fill stretch!important;background:none!important;border-radius:0!important;color:#fff!important}.mb:hover,.mb:active{border-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADYAAAA2CAYAAACMRWrdAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsEAAA7BAbiRa+0AAABeSURBVGhD7c8xEcAwDMBAt/wJhYyxdCmJz+kXzXp298yF3r/XaUzTmKYxTWOaxjSNaRrTNKZpTNOYpjFNY5rGNI1pGtM0pmlM05imMU1jmsY0jWka0zSmaUzTmGXmAwAiA7/vcMPDAAAAAElFTkSuQmCC) 8 fill stretch!important}</style>
+<script>function hpCol(h){const S=[[[255,28,0],.1],[[250,235,0],.5],[[27,252,107],.8]];if(h<.1)return'rgb(255,28,0)';if(h>.8)return'rgb(27,252,107)';let n=[0,0,0],d=0;for(const[c,p]of S){const t=h-p;if(t===0)return`rgb(${c})`;const w=1/(t*t);n=n.map((v,i)=>v+w*c[i]);d+=w}return`rgb(${n.map(v=>v/d|0)})`}</script>
+<style id="tb2017">
+#top{left:0!important;right:0!important;top:0!important;height:36px!important;background:rgba(31,31,31,.5)!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:0!important;gap:0!important}
+@media (pointer:coarse){#top{height:calc(44px + env(safe-area-inset-top))!important;padding:env(safe-area-inset-top) var(--sr) 0 var(--sl)!important;box-sizing:border-box}#me{height:44px}}
+
+@media (pointer:fine){#me{position:static!important;margin-left:auto!important;width:170px!important;height:36px!important;display:block!important;position:relative!important;padding:0!important;border:0!important;border-radius:0!important;background:none!important;backdrop-filter:none!important}}
+#me{width:170px;display:block!important;position:relative;padding:0!important;border:0!important;background:none!important;backdrop-filter:none!important;height:36px}
+#me .nm{position:absolute;left:7px;top:0;height:18px;line-height:18px;display:flex;align-items:flex-end;font:700 14px "Source Sans Pro",sans-serif!important;color:#fff;opacity:1}
+#me .age{position:absolute;left:7px;top:20px;height:9px;line-height:9px;font:400 11px "Source Sans Pro",sans-serif!important;color:#fff;opacity:1!important}
+#hpw{position:absolute!important;left:7px;right:7px;top:29px;bottom:auto;width:auto!important;height:3px!important;border-radius:0!important;background:rgb(228,236,246)!important}
+#hp{border-radius:0!important}
+</style>
 <link rel="manifest" href="manifest.webmanifest">
 </head><body><canvas id="c"></canvas>
 <div id="top" class="ui">
@@ -1046,6 +1058,6 @@ $('playBtn').onclick=()=>{play('b');BUILD=false;ghost=null;SEL=null;if(STUDIO){S
  say(null,MODE==='sword'?'Welcome to Crossroads! Chat /help for commands.':(coins.length?'Collect all '+coins.length+' stars!':'Welcome to '+GAMES.custom.t+'!'),'sys')};
 
 setInterval(()=>{if(!GAMEON)return;if(MODE==='obby')bots.forEach(b=>{if(Math.random()<.08&&b.s<coins.length)b.s++});rows();
- $('hp08f').style.width=P.hp+'%';const hp=$('hp');hp.style.width=P.hp+'%';hp.style.background=P.hp>50?'#27c43c':P.hp>25?'#e3c21b':'#d6312e'},300);
+ $('hp08f').style.width=P.hp+'%';const hp=$('hp');hp.style.width=P.hp+'%';hp.style.background=hpCol(P.hp/100);$('hpw').style.visibility=P.hp<100?'visible':'hidden'},300);
 
 </script></body></html>
