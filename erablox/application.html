@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application - Erablox</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?compat=recaptcha" async defer></script>
+
+    <style>
+        body { background-color: #000008; color: white; font-family: 'Montserrat', sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; }
+        
+        .menu-icon { align-self: flex-start; border: 3px solid white; border-radius: 12px; padding: 8px; margin-bottom: 30px; }
+        .bar { width: 35px; height: 5px; background: white; margin: 6px; border-radius: 2px; }
+
+        .title { font-size: 56px; font-weight: 500; margin-bottom: 40px; }
+
+        .input-group { width: 100%; max-width: 340px; margin-bottom: 25px; }
+        label { display: block; font-size: 20px; margin-bottom: 15px; line-height: 1.2; }
+        input { width: 100%; height: 45px; border-radius: 10px; border: none; padding: 0 15px; box-sizing: border-box; font-size: 18px; color: black; outline: none; }
+
+        .verify-box { background-color: #5db3d5; width: 100%; max-width: 340px; padding: 15px; border-radius: 5px; margin-bottom: 20px; box-sizing: border-box; }
+        .verify-text { font-size: 32px; font-weight: 400; line-height: 1.1; color: white; text-align: center; }
+        
+        /* Капча под синим блоком */
+        .cf-turnstile { margin-bottom: 25px; width: 100%; max-width: 340px; display: flex; justify-content: center; }
+
+        .send-btn { background-color: #a3c9a1; color: white; border: none; width: 100%; max-width: 340px; height: 55px; border-radius: 15px; font-size: 52px; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-bottom: 30px; }
+
+        .footer-link { color: #5db3d5; text-decoration: underline; font-size: 22px; text-align: center; line-height: 1.2; display: block; }
+    </style>
+</head>
+<body>
+
+    <div class="menu-icon"><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+
+    <h1 class="title">Application</h1>
+
+    <div class="input-group">
+        <label>enter information of yourself</label>
+        <input type="text" id="infoInput">
+    </div>
+
+    <div class="input-group">
+        <label>enter link of your profile in roblox</label>
+        <input type="text" id="linkInput">
+    </div>
+
+    <label style="width: 100%; max-width: 340px;">enter this description in your roblox profile</label>
+    
+    <div class="verify-box">
+        <div class="verify-text">erablox fly bird lava chicken</div>
+    </div>
+
+    <div class="cf-turnstile" data-sitekey="0x4AAAAAAC_maAszuVxStrz0"></div>
+
+    <button class="send-btn" id="sendBtn">send</button>
+
+    <a href="signup.html" class="footer-link">https://erablox.web.app/<br>signup.html</a>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        var firebaseConfig = {
+          apiKey: "AIzaSyDZAjauAbq0tsLh1EZtaUp8-O9wbZmX4A8",
+          authDomain: "erablox0.firebaseapp.com",
+          projectId: "erablox0",
+          storageBucket: "erablox0.firebasestorage.app",
+          messagingSenderId: "747146722972",
+          appId: "1:747146722972:web:2643f95690cb76c3bfb759"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        var db = firebase.firestore();
+
+        document.getElementById('sendBtn').onclick = function() {
+            // Проверка капчи
+            var captchaResponse = document.querySelector('[name="cf-turnstile-response"]').value;
+            
+            if (!captchaResponse) {
+                alert("Error: Please verify that you are not a robot first!");
+                return;
+            }
+
+            var link = document.getElementById('linkInput').value;
+            if (!link) return alert("Enter link!");
+
+            // Пишем в Review
+            db.collection("Review").get().then(function(snap) {
+                var count = snap.size + 1;
+                var customId = count < 10 ? "0" + count : count.toString();
+
+                db.collection("Review").doc(customId).set({
+                    roblox_link: link,
+                    user_info: document.getElementById('infoInput').value,
+                    status: "reviewing",
+                    date: new Date().toLocaleDateString('ru-RU'),
+                    time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+                }).then(function() {
+                    localStorage.setItem('last_review_id', customId);
+                    window.location.href = 'reviewing.html';
+                });
+            }).catch(function(err) {
+                alert("Firebase Error: " + err.message);
+            });
+        };
+    </script>
+</body>
+</html>

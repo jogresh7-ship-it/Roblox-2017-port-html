@@ -1,3 +1,3 @@
-# Roblox-2017-port-html
+# Brickhub
 
-Starting over.
+A 2017-style brick game that runs in the browser.
